@@ -15,10 +15,10 @@
 const WORKS = [
   {
     number: "01",
-    title: "Drift",
+    title: "spin-wheel",
     tag: "Visual",
     year: "2026",
-    url: "works/piece-01-drift.html"
+    url: "works/spin-wheel.html"
   },
   {
     number: "02",
