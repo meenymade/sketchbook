@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>럭키 스핀 · 돌림판</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1b1a20;
+  --cream:#fff7e8;
+  --cream2:#ffeccb;
+  --coral:#ff5d5d;
+  --yellow:#ffc93c;
+  --mint:#39d2c0;
+  --sky:#5bb0ff;
+  --grape:#a889ff;
+  --pink:#ff8fb1;
+  --shadow:6px 6px 0 var(--ink);
+  --shadow-sm:4px 4px 0 var(--ink);
+  --font:'Jua','Apple SD Gothic Neo','Pretendard','Malgun Gothic',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font);
+  color:var(--ink);
+  background-color:var(--cream);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(27,26,32,.10) 1px, transparent 0),
+    repeating-linear-gradient(135deg, rgba(255,201,60,.20) 0 22px, transparent 22px 44px);
+  background-size:18px 18px, auto;
+  min-height:100%;
+  padding:28px 20px 56px;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── 헤더 ───────────────────────────── */
+.brand{text-align:center;margin-bottom:26px}
+.brand h1{
+  display:inline-block;
+  font-size:clamp(28px,4.4vw,44px);
+  letter-spacing:-.5px;
+  background:var(--yellow);
+  border:3px solid var(--ink);
+  border-radius:16px;
+  padding:10px 26px 12px;
+  box-shadow:var(--shadow);
+  transform:rotate(-1.6deg);
+}
+.brand h1 em{font-style:normal;color:var(--coral);text-shadow:2px 2px 0 var(--ink)}
+.brand p{margin-top:14px;font-size:15px;opacity:.62}
+
+/* ── 레이아웃 ────────────────────────── */
+.layout{
+  max-width:1060px;margin:0 auto;
+  display:grid;grid-template-columns:minmax(320px,420px) 1fr;
+  gap:34px;align-items:start;
+  transition:grid-template-columns .5s ease;
+}
+body.mode-spin .layout{grid-template-columns:0fr 1fr;gap:0}
+body.mode-spin .brand p,
+body.mode-shared .brand p{display:none}
+body.mode-shared .layout{grid-template-columns:1fr;max-width:640px}
+body.mode-shared #setup,
+body.mode-shared #backBtn{display:none}
+body.mode-spin #setup{opacity:0;transform:translateX(-24px) scale(.96);pointer-events:none;visibility:hidden}
+#setup{transition:opacity .35s ease, transform .35s ease;min-width:0}
+
+.panel{
+  background:#fff;border:3px solid var(--ink);border-radius:20px;
+  box-shadow:var(--shadow);padding:22px 20px 20px;
+}
+.panel h2{
+  font-size:18px;display:flex;align-items:center;gap:8px;margin-bottom:4px;
+}
+.panel h2 .tag{
+  font-size:12px;background:var(--mint);border:2px solid var(--ink);
+  border-radius:999px;padding:2px 9px;box-shadow:2px 2px 0 var(--ink);
+}
+.hint{font-size:13px;opacity:.6;margin:6px 0 16px;line-height:1.5}
+
+/* ── 항목 행 ────────────────────────── */
+.rows{display:flex;flex-direction:column;gap:12px}
+.row{
+  border:2.5px solid var(--ink);border-radius:14px;padding:11px 12px 12px;
+  background:var(--cream);box-shadow:var(--shadow-sm);
+  transition:transform .16s ease, background .16s ease;
+}
+.row.is-target{background:#fffbe9;transform:translate(-1px,-1px)}
+.row-top{display:flex;align-items:center;gap:9px}
+.swatch{
+  width:30px;height:30px;flex:none;padding:0;border:2.5px solid var(--ink);
+  border-radius:9px;cursor:pointer;background:none;overflow:hidden;
+}
+.swatch::-webkit-color-swatch-wrapper{padding:0}
+.swatch::-webkit-color-swatch{border:none;border-radius:5px}
+.swatch::-moz-color-swatch{border:none;border-radius:5px}
+.name{
+  flex:1;min-width:0;font-family:var(--font);font-size:15.5px;color:var(--ink);
+  border:2.5px solid var(--ink);border-radius:9px;padding:6px 10px;background:#fff;
+}
+.name:focus{outline:none;box-shadow:0 0 0 3px var(--yellow)}
+.iconbtn{
+  width:30px;height:30px;flex:none;border:2.5px solid var(--ink);border-radius:9px;
+  background:#fff;cursor:pointer;font-size:15px;line-height:1;color:var(--ink);
+  display:grid;place-items:center;transition:background .14s ease,transform .1s ease;
+}
+.iconbtn:hover{background:var(--coral);color:#fff}
+.iconbtn:active{transform:translate(1px,1px)}
+.star{font-family:var(--font);font-size:13px;padding:0 10px;width:auto;gap:4px;white-space:nowrap}
+.row.is-target .star{background:var(--yellow)}
+.row.is-target .star:hover{background:var(--yellow);color:var(--ink)}
+
+.row-bot{display:flex;align-items:center;gap:11px;margin-top:10px}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;flex:1;height:12px;border-radius:99px;
+  border:2.5px solid var(--ink);background:#fff;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:var(--coral);border:2.5px solid var(--ink);cursor:grab;
+}
+input[type=range]::-moz-range-thumb{
+  width:16px;height:16px;border-radius:50%;background:var(--coral);
+  border:2.5px solid var(--ink);cursor:grab;
+}
+.pct{
+  font-size:14px;min-width:56px;text-align:right;font-variant-numeric:tabular-nums;
+}
+.pct b{font-size:17px}
+
+/* ── 버튼 ───────────────────────────── */
+.btn{
+  font-family:var(--font);font-size:16px;color:var(--ink);cursor:pointer;
+  border:3px solid var(--ink);border-radius:13px;padding:11px 18px;background:#fff;
+  box-shadow:var(--shadow-sm);transition:transform .1s ease, box-shadow .1s ease, background .16s ease;
+}
+.btn:hover{background:var(--cream2)}
+.btn:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.btn.ghost{box-shadow:none;border-width:2.5px;padding:9px 14px;font-size:14px}
+.btn.ghost:active{transform:translate(2px,2px)}
+.btn.go{
+  width:100%;margin-top:18px;font-size:22px;padding:15px;background:var(--coral);color:#fff;
+  box-shadow:var(--shadow);text-shadow:2px 2px 0 rgba(0,0,0,.25);
+}
+.btn.go:hover{background:#ff4747}
+.btn.go:disabled{background:#d9d6cf;color:#8a8780;cursor:not-allowed;text-shadow:none}
+.btn.go:disabled:active{transform:none;box-shadow:var(--shadow)}
+.toolbar{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:6px;margin:14px 0 2px}
+.field span{font-size:13px;opacity:.6}
+.field .name{flex:none;width:100%}
+
+.share{display:none;margin-top:2px;max-width:360px;text-align:center}
+body.mode-spin .share{display:block}
+body.is-spinning .share,
+body.mode-shared .share{display:none}
+.share .btn{width:100%;background:var(--grape);color:#fff;box-shadow:var(--shadow-sm)}
+.share .btn:hover{background:#9575ff}
+.share p{font-size:12.5px;opacity:.55;margin-top:8px;line-height:1.55}
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);
+  background:var(--ink);color:var(--cream);border-radius:12px;padding:11px 20px;
+  font-size:14px;box-shadow:var(--shadow-sm);opacity:0;pointer-events:none;z-index:60;
+  transition:opacity .25s ease, transform .25s ease;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ── 돌림판 ─────────────────────────── */
+.stage{display:flex;flex-direction:column;align-items:center;gap:22px;min-width:0}
+.wheel-box{position:relative;width:min(78vw,520px);aspect-ratio:1;flex:none}
+.pointer{
+  position:absolute;top:-22px;left:50%;transform:translateX(-50%);
+  z-index:3;width:clamp(46px,11%,60px);height:auto;overflow:visible;
+  filter:drop-shadow(2px 3px 0 rgba(27,26,32,.22));
+  transform-origin:50% 22%;
+}
+body.is-spinning .pointer{animation:tick .12s linear infinite}
+@keyframes tick{0%,100%{transform:translateX(-50%) rotate(-6deg)}50%{transform:translateX(-50%) rotate(6deg)}}
+.wheel-rot{width:100%;height:100%;will-change:transform}
+canvas#wheel{width:100%;height:100%;display:block}
+.hub{
+  position:absolute;top:50%;left:50%;z-index:4;
+  transform:translate(-50%,-50%);
+  width:20%;height:20%;border-radius:50%;border:3px solid var(--ink);
+  background:var(--yellow);
+  box-shadow:0 0 0 5px var(--cream), 0 0 0 8px var(--ink);
+  display:grid;place-items:center;font-size:clamp(12px,2.2vw,17px);
+  letter-spacing:.5px;cursor:pointer;padding:0;
+  transition:transform .12s ease, background .16s ease;
+  font-family:var(--font);color:var(--ink);
+}
+.hub:hover{background:#ffd662}
+.hub:active{transform:translate(-50%,-50%) scale(.93)}
+.hub:disabled{background:#e8e4da;cursor:default}
+
+/* ── 결과 ───────────────────────────── */
+.result{
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  opacity:0;transform:translateY(10px) scale(.9);pointer-events:none;
+  transition:opacity .3s ease, transform .3s cubic-bezier(.2,1.5,.4,1);
+}
+.result.show{opacity:1;transform:none;pointer-events:auto}
+.ribbon{
+  background:var(--mint);border:3px solid var(--ink);border-radius:18px;
+  box-shadow:var(--shadow);padding:14px 30px 16px;text-align:center;transform:rotate(-1deg);
+}
+.ribbon small{display:block;font-size:13px;opacity:.7;letter-spacing:2px}
+.ribbon strong{display:block;font-size:clamp(26px,4.6vw,40px);line-height:1.25;margin-top:2px;
+  word-break:keep-all;max-width:11em}
+.result .toolbar{justify-content:center;margin:0}
+.status{font-size:15px;opacity:.55;height:20px}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
+.warn{
+  font-size:13px;color:#c62828;background:#ffe9e9;border:2px solid #c62828;
+  border-radius:10px;padding:7px 10px;margin-top:12px;display:none;
+}
+.warn.show{display:block}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  body.mode-spin .layout{grid-template-columns:1fr}
+  body.mode-spin #setup{display:none}
+  .wheel-box{width:min(88vw,460px)}
+}
+</style>
+</head>
+<body class="mode-setup">
+
+<div class="brand">
+  <h1 id="brandTitle">오늘의 <em>럭키 스핀</em></h1>
+  <p>항목과 비중을 정하고, 힘차게 돌려보세요</p>
+</div>
+
+<div class="layout">
+  <!-- 설정 패널 -->
+  <section class="panel" id="setup">
+    <h2>항목 설정 <span class="tag">SETUP</span></h2>
+    <label class="field">
+      <span>돌림판 제목</span>
+      <input class="name" id="titleInput" type="text" maxlength="24" placeholder="오늘의 럭키 스핀">
+    </label>
+    <p class="hint">비중 슬라이더는 자동으로 100퍼센트에 맞춰 환산됩니다.<br>별 버튼을 누르면 그 항목이 확정 항목이 됩니다.</p>
+    <div class="rows" id="rows"></div>
+    <div class="toolbar">
+      <button class="btn ghost" id="addBtn">+ 항목 추가</button>
+      <button class="btn ghost" id="evenBtn">비중 균등하게</button>
+      <button class="btn ghost" id="resetBtn">초기화</button>
+    </div>
+    <div class="warn" id="warn"></div>
+    <button class="btn go" id="spinBtn">돌리기!</button>
+  </section>
+
+  <!-- 돌림판 -->
+  <section class="stage">
+    <div class="wheel-box">
+      <svg class="pointer" viewBox="0 0 60 74" aria-hidden="true">
+        <path d="M30 70 L8 26 A22 22 0 1 1 52 26 Z" fill="#ff5d5d" stroke="#1b1a20" stroke-width="4" stroke-linejoin="round"/>
+        <circle cx="30" cy="24" r="6.5" fill="#fff7e8" stroke="#1b1a20" stroke-width="4"/>
+      </svg>
+      <div class="wheel-rot" id="rot"><canvas id="wheel"></canvas></div>
+      <button class="hub" id="hub">GO</button>
+    </div>
+    <p class="status" id="status">준비 완료</p>
+    <div class="share" id="spinTools">
+      <button class="btn" id="shareBtn">공유용 파일 만들기</button>
+      <p>지금 설정 그대로 담긴 HTML 파일을 내려받습니다.<br>
+         받은 사람에게는 돌림판만 보이고 설정 화면은 나타나지 않습니다.</p>
+    </div>
+    <div class="result" id="result">
+      <div class="ribbon"><small>당첨</small><strong id="winner">-</strong></div>
+      <div class="toolbar">
+        <button class="btn" id="againBtn">다시 돌리기</button>
+        <button class="btn ghost" id="backBtn">설정으로 돌아가기</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<canvas id="confetti"></canvas>
+<div class="toast" id="toast"></div>
+
+<script id="shared-config">/* 공유용 파일을 만들 때 이 자리에 설정이 채워집니다. */</script>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   순수 계산 로직 (외부 검증 대상)
+   각도 단위: 도(deg). 12시 방향을 0도로 두고 시계 방향으로 증가.
+   ══════════════════════════════════════════════════════ */
+
+/** 항목 목록을 누적 비율에 따른 부채꼴 구간으로 환산한다. */
+function computeSegments(items){
+  const weights = items.map(it => Math.max(1, Number(it.weight) || 1));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let acc = 0;
+  return items.map((it, i) => {
+    const pct = weights[i] / total * 100;
+    const start = acc * 3.6;
+    acc += pct;
+    return { index:i, name:it.name, color:it.color, pct, start, end: acc * 3.6 };
+  });
+}
+
+/** 확정 항목의 부채꼴 안에서, 경계에 붙지 않는 임의의 정지 지점을 고른다. */
+const EDGE_MARGIN = 0.08;
+function pickTargetAngle(seg, rnd){
+  const span = seg.end - seg.start;
+  const inset = span * EDGE_MARGIN;
+  return seg.start + inset + rnd() * (span - inset * 2);
+}
+
+/** 현재 회전각에서 목표 지점이 포인터에 정확히 오도록 최종 회전각을 계산한다. */
+function computeSpin(currentRotation, targetAngle, turns){
+  const norm = (((-targetAngle - currentRotation) % 360) + 360) % 360;
+  return currentRotation + turns * 360 + norm;
+}
+
+/** 특정 회전각일 때 포인터가 가리키는 부채꼴을 찾는다. (검증용) */
+function segmentAtPointer(segments, rotation){
+  const local = ((-rotation % 360) + 360) % 360;
+  for (const s of segments){
+    if (local >= s.start && local < s.end) return s;
+  }
+  return segments[segments.length - 1];
+}
+
+if (typeof module !== 'undefined' && module.exports){
+  module.exports = { computeSegments, pickTargetAngle, computeSpin, segmentAtPointer };
+}
+</script>
+
+<script>
+(function(){
+if (typeof document === 'undefined') return;
+
+const PALETTE = ['#ffc93c','#ff8fb1','#5bb0ff','#39d2c0','#a889ff','#ff9d5c','#9be564','#ff5d5d'];
+const DEFAULTS = [
+  { name:'짜장면', weight:25 },
+  { name:'짬뽕',   weight:25 },
+  { name:'탕수육', weight:25 },
+  { name:'볶음밥', weight:25 },
+];
+
+const DEFAULT_TITLE = '오늘의 럭키 스핀';
+let items = [];
+let title = DEFAULT_TITLE;
+let targetId = null;
+let uid = 0;
+let rotation = 0;
+let spinning = false;
+
+const $ = id => document.getElementById(id);
+const rowsEl = $('rows'), warnEl = $('warn'), statusEl = $('status');
+const rotEl = $('rot'), hubEl = $('hub'), resultEl = $('result'), winnerEl = $('winner');
+const canvas = $('wheel'), ctx = canvas.getContext('2d');
+const titleEl = $('brandTitle'), titleInput = $('titleInput');
+
+/** 제목의 마지막 낱말만 강조색으로 표시한다. */
+function renderTitle(){
+  const t = title.trim() || DEFAULT_TITLE;
+  const i = t.lastIndexOf(' ');
+  titleEl.textContent = i > 0 ? t.slice(0, i + 1) : '';
+  const em = document.createElement('em');
+  em.textContent = i > 0 ? t.slice(i + 1) : t;
+  titleEl.appendChild(em);
+  document.title = t + ' · 돌림판';
+}
+
+/* ── 상태 ────────────────────────────── */
+function makeItem(name, weight){
+  return { id: ++uid, name, weight, color: PALETTE[(uid - 1) % PALETTE.length] };
+}
+function reset(){
+  uid = 0;
+  items = DEFAULTS.map(d => makeItem(d.name, d.weight));
+  title = DEFAULT_TITLE;
+  titleInput.value = '';
+  renderTitle();
+  targetId = items[0].id;
+  rotation = 0;
+  rotEl.style.transition = 'none';
+  rotEl.style.transform = 'rotate(0deg)';
+  renderRows(); draw();
+}
+function segments(){
+  return computeSegments(items.map((it, i) => ({
+    name: it.name.trim() || ('항목 ' + (i + 1)),
+    weight: it.weight,
+    color: it.color,
+  })));
+}
+
+/* ── 설정 화면 렌더링 ─────────────────── */
+function renderRows(){
+  const segs = segments();
+  rowsEl.innerHTML = '';
+  items.forEach((it, i) => {
+    const seg = segs[i];
+    const row = document.createElement('div');
+    row.className = 'row' + (it.id === targetId ? ' is-target' : '');
+    row.innerHTML =
+      '<div class="row-top">' +
+        '<input class="swatch" type="color" value="' + it.color + '" title="색상 변경">' +
+        '<input class="name" type="text" maxlength="14" placeholder="항목 ' + (i + 1) + '">' +
+        '<button class="iconbtn star" title="확정 항목으로 지정">' +
+          (it.id === targetId ? '★ 확정' : '☆ 확정') +
+        '</button>' +
+        '<button class="iconbtn del" title="삭제">×</button>' +
+      '</div>' +
+      '<div class="row-bot">' +
+        '<input type="range" min="1" max="100" value="' + it.weight + '">' +
+        '<span class="pct"><b>' + seg.pct.toFixed(1) + '</b>%</span>' +
+      '</div>';
+
+    row.querySelector('.name').value = it.name;
+    row.querySelector('.name').addEventListener('input', e => {
+      it.name = e.target.value; draw();
+    });
+    row.querySelector('.swatch').addEventListener('input', e => {
+      it.color = e.target.value; draw();
+    });
+    row.querySelector('input[type=range]').addEventListener('input', e => {
+      it.weight = Number(e.target.value);
+      refreshPercents(); draw();
+    });
+    row.querySelector('.star').addEventListener('click', () => {
+      targetId = it.id; renderRows(); validate();
+    });
+    row.querySelector('.del').addEventListener('click', () => {
+      if (items.length <= 2){ flashWarn('항목은 2개 이상이어야 합니다.'); return; }
+      items = items.filter(x => x.id !== it.id);
+      if (targetId === it.id) targetId = items[0].id;
+      renderRows(); draw(); validate();
+    });
+    rowsEl.appendChild(row);
+  });
+  validate();
+}
+
+function refreshPercents(){
+  const segs = segments();
+  rowsEl.querySelectorAll('.pct b').forEach((el, i) => {
+    el.textContent = segs[i].pct.toFixed(1);
+  });
+}
+
+function validate(){
+  const ok = items.length >= 2 && items.some(it => it.id === targetId);
+  $('spinBtn').disabled = !ok;
+  hubEl.disabled = !ok;
+  return ok;
+}
+let warnTimer = null;
+function flashWarn(msg){
+  warnEl.textContent = msg;
+  warnEl.classList.add('show');
+  clearTimeout(warnTimer);
+  warnTimer = setTimeout(() => warnEl.classList.remove('show'), 2600);
+}
+
+/* ── 돌림판 그리기 ───────────────────── */
+const rad = d => d * Math.PI / 180;
+
+function draw(){
+  const box = canvas.parentElement.getBoundingClientRect();
+  const size = Math.max(240, Math.round(box.width));
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, size, size);
+
+  const c = size / 2;
+  const R = c - 16;          // 부채꼴 반지름
+  const rimW = 11;           // 테두리 링 두께
+  const segs = segments();
+
+  ctx.save();
+  ctx.translate(c, c);
+
+  // 그림자
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(3, 6, R + rimW / 2, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(27,26,32,.18)';
+  ctx.fill();
+  ctx.restore();
+
+  // 부채꼴
+  segs.forEach(s => {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, R, rad(s.start - 90), rad(s.end - 90));
+    ctx.closePath();
+    ctx.fillStyle = s.color;
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#1b1a20';
+    ctx.stroke();
+  });
+
+  // 라벨
+  const hubR = size * 0.10 + 8;              // 허브와 바깥 링이 차지하는 반경
+  const fontName = getComputedStyle(document.body).fontFamily;
+  const baseFs = Math.min(size * 0.042, 22);
+  const outerX = R - 22;                     // 글자가 끝나는 지점
+  const maxW = outerX - hubR - 6;
+
+  segs.forEach(s => {
+    const span = s.end - s.start;
+    const mid = (s.start + s.end) / 2;
+    const half = rad(Math.min(span, 180) / 2);
+
+    // 이름이 길면 말줄임표로 잘라낸다.
+    let label = s.name;
+    ctx.font = baseFs + 'px ' + fontName;
+    if (ctx.measureText(label).width > maxW){
+      while (label.length > 1 && ctx.measureText(label + '…').width > maxW){
+        label = label.slice(0, -1);
+      }
+      label += '…';
+    }
+
+    // 부채꼴이 좁을수록 글자가 놓일 세로 여유가 줄어든다.
+    // 글자 폭에 따라 시작 반경이 달라지므로, 몇 차례 되풀이하며 실제 여유에 맞는 크기를 찾는다.
+    let fs = baseFs;
+    for (let i = 0; i < 4; i++){
+      ctx.font = fs + 'px ' + fontName;
+      const inner = Math.max(hubR + 4, outerX - ctx.measureText(label).width);
+      const room = 2 * inner * Math.sin(half);
+      const next = Math.min(baseFs, room * 0.72);
+      const settled = Math.abs(next - fs) < 0.3;
+      fs = next;
+      if (settled) break;
+    }
+
+    // 글자가 알아볼 수 없을 만큼 작아지면 아예 그리지 않는다.
+    if (fs < 10) return;
+
+    ctx.save();
+    ctx.rotate(rad(mid - 90));
+    ctx.font = fs + 'px ' + fontName;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#1b1a20';
+    ctx.fillText(label, outerX, 0);
+    ctx.restore();
+  });
+
+  // 테두리 링과 전구
+  ctx.beginPath();
+  ctx.arc(0, 0, R + rimW / 2, 0, Math.PI * 2);
+  ctx.lineWidth = rimW;
+  ctx.strokeStyle = '#1b1a20';
+  ctx.stroke();
+
+  const bulbs = 24;
+  for (let i = 0; i < bulbs; i++){
+    const a = rad(i * (360 / bulbs) - 90);
+    const bx = Math.cos(a) * (R + rimW / 2);
+    const by = Math.sin(a) * (R + rimW / 2);
+    ctx.beginPath();
+    ctx.arc(bx, by, rimW * 0.29, 0, Math.PI * 2);
+    ctx.fillStyle = i % 2 ? '#fff7e8' : '#ffc93c';
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ── 회전 ───────────────────────────── */
+function spin(){
+  if (spinning || !validate()) return;
+  const segs = segments();
+  const target = segs[items.findIndex(it => it.id === targetId)];
+  if (!target) return;
+
+  spinning = true;
+  document.body.classList.add('mode-spin', 'is-spinning');
+  document.body.classList.remove('mode-setup');
+  resultEl.classList.remove('show');
+  statusEl.textContent = '돌리는 중…';
+  hubEl.disabled = true;
+
+  const angle = pickTargetAngle(target, Math.random);
+  const turns = 5 + Math.floor(Math.random() * 3);      // 5~7바퀴
+  const duration = 4.6 + Math.random();                 // 4.6~5.6초
+  rotation = computeSpin(rotation, angle, turns);
+
+  // 레이아웃 전환이 끝난 뒤 회전을 시작하여 캔버스 크기 변화와 겹치지 않게 한다.
+  requestAnimationFrame(() => {
+    draw();
+    requestAnimationFrame(() => {
+      rotEl.style.transition = 'transform ' + duration + 's cubic-bezier(.12,.72,.16,1)';
+      rotEl.style.transform = 'rotate(' + rotation + 'deg)';
+    });
+  });
+
+  const finish = () => {
+    rotEl.removeEventListener('transitionend', finish);
+    clearTimeout(fallback);
+    spinning = false;
+    hubEl.disabled = false;
+    document.body.classList.remove('is-spinning');
+    const landed = segmentAtPointer(segments(), rotation);
+    winnerEl.textContent = landed.name;
+    statusEl.textContent = '결과가 나왔습니다';
+    resultEl.classList.add('show');
+    burstConfetti();
+  };
+  rotEl.addEventListener('transitionend', finish);
+  const fallback = setTimeout(finish, duration * 1000 + 700);
+}
+
+function backToSetup(){
+  if (spinning) return;
+  document.body.classList.add('mode-setup');
+  document.body.classList.remove('mode-spin');
+  resultEl.classList.remove('show');
+  statusEl.textContent = '준비 완료';
+  hubEl.disabled = false;
+  requestAnimationFrame(() => setTimeout(draw, 380));
+}
+
+/* ── 색종이 ─────────────────────────── */
+const cc = $('confetti'), cctx = cc.getContext('2d');
+let pieces = [], confAnim = null;
+function burstConfetti(){
+  cc.width = innerWidth; cc.height = innerHeight;
+  const colors = PALETTE.concat(['#fff7e8']);
+  pieces = Array.from({ length: 140 }, () => ({
+    x: innerWidth / 2 + (Math.random() - .5) * innerWidth * .5,
+    y: innerHeight * .3 + (Math.random() - .5) * 120,
+    vx: (Math.random() - .5) * 11,
+    vy: -6 - Math.random() * 9,
+    w: 7 + Math.random() * 8,
+    h: 9 + Math.random() * 10,
+    rot: Math.random() * Math.PI,
+    vr: (Math.random() - .5) * .3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    life: 0,
+  }));
+  cancelAnimationFrame(confAnim);
+  step();
+}
+function step(){
+  cctx.clearRect(0, 0, cc.width, cc.height);
+  let alive = 0;
+  pieces.forEach(p => {
+    p.life++;
+    p.vy += 0.34;
+    p.vx *= 0.995;
+    p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+    if (p.y < cc.height + 40){
+      alive++;
+      cctx.save();
+      cctx.translate(p.x, p.y);
+      cctx.rotate(p.rot);
+      cctx.fillStyle = p.color;
+      cctx.strokeStyle = 'rgba(27,26,32,.55)';
+      cctx.lineWidth = 1.4;
+      cctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      cctx.strokeRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      cctx.restore();
+    }
+  });
+  if (alive) confAnim = requestAnimationFrame(step);
+  else cctx.clearRect(0, 0, cc.width, cc.height);
+}
+
+/* ── 공유 ───────────────────────────── */
+const encodeConfig = obj =>
+  btoa(Array.from(new TextEncoder().encode(JSON.stringify(obj)))
+    .map(b => String.fromCharCode(b)).join(''));
+const decodeConfig = str =>
+  JSON.parse(new TextDecoder().decode(
+    Uint8Array.from(atob(str), ch => ch.charCodeAt(0))));
+
+function currentConfig(){
+  return {
+    v: 1,
+    title: title.trim() || DEFAULT_TITLE,
+    target: items.findIndex(it => it.id === targetId),
+    items: items.map((it, i) => ({
+      n: it.name.trim() || ('항목 ' + (i + 1)),
+      w: it.weight,
+      c: it.color,
+    })),
+  };
+}
+
+/** 현재 페이지를 복제하고 설정을 심어, 그 자체로 완결된 공유용 HTML을 만든다. */
+function buildSharedHtml(){
+  const clone = document.documentElement.cloneNode(true);
+  clone.querySelector('#rows').innerHTML = '';
+  clone.querySelector('#rot').removeAttribute('style');
+  clone.querySelector('#result').className = 'result';
+  clone.querySelector('#warn').className = 'warn';
+  clone.querySelector('#toast').className = 'toast';
+  clone.querySelector('#winner').textContent = '-';
+  clone.querySelector('#titleInput').removeAttribute('value');
+  clone.querySelectorAll('[disabled]').forEach(el => el.removeAttribute('disabled'));
+  clone.querySelector('#shared-config').textContent =
+    'window.__SHARED__=' + JSON.stringify(encodeConfig(currentConfig())) + ';';
+  return '<!DOCTYPE html>\n' + clone.outerHTML;
+}
+
+function downloadShared(){
+  if (!validate()){ flashWarn('항목과 확정 항목을 먼저 설정해 주세요.'); return; }
+  const blob = new Blob([buildSharedHtml()], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '럭키스핀.html';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  toast('공유용 파일을 내려받았습니다');
+}
+
+/** 공유용 파일 또는 주소 해시에 담긴 설정을 읽는다. */
+function readShared(){
+  let raw = window.__SHARED__ || null;
+  if (!raw && location.hash.startsWith('#c=')) raw = decodeURIComponent(location.hash.slice(3));
+  if (!raw) return null;
+  try {
+    const cfg = decodeConfig(raw);
+    if (!cfg || !Array.isArray(cfg.items) || cfg.items.length < 2) return null;
+    return cfg;
+  } catch (e) { return null; }
+}
+
+function applyShared(cfg){
+  uid = 0;
+  items = cfg.items.map(o => {
+    const it = makeItem(o.n, Math.max(1, Number(o.w) || 1));
+    if (typeof o.c === 'string') it.color = o.c;
+    return it;
+  });
+  const ti = Math.min(Math.max(0, cfg.target | 0), items.length - 1);
+  targetId = items[ti].id;
+  title = typeof cfg.title === 'string' && cfg.title.trim() ? cfg.title : DEFAULT_TITLE;
+  titleInput.value = title === DEFAULT_TITLE ? '' : title;
+  renderTitle();
+  renderRows();
+  document.body.classList.add('mode-shared', 'mode-spin');
+  document.body.classList.remove('mode-setup');
+  statusEl.textContent = '가운데 버튼을 눌러 돌려보세요';
+  requestAnimationFrame(draw);
+}
+
+let toastTimer = null;
+function toast(msg){
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+/* ── 이벤트 연결 ─────────────────────── */
+$('addBtn').addEventListener('click', () => {
+  if (items.length >= 12){ flashWarn('항목은 최대 12개까지 추가할 수 있습니다.'); return; }
+  items.push(makeItem('', 20));
+  renderRows(); draw();
+  const last = rowsEl.lastElementChild.querySelector('.name');
+  last.focus();
+});
+$('evenBtn').addEventListener('click', () => {
+  items.forEach(it => it.weight = 20);
+  renderRows(); draw();
+});
+$('resetBtn').addEventListener('click', reset);
+$('spinBtn').addEventListener('click', spin);
+hubEl.addEventListener('click', spin);
+$('againBtn').addEventListener('click', spin);
+$('backBtn').addEventListener('click', backToSetup);
+$('shareBtn').addEventListener('click', downloadShared);
+titleInput.addEventListener('input', e => { title = e.target.value; renderTitle(); });
+addEventListener('resize', () => { draw(); cc.width = innerWidth; cc.height = innerHeight; });
+
+reset();
+const sharedCfg = readShared();
+if (sharedCfg) applyShared(sharedCfg);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+})();
+</script>
+</body>
+</html>
