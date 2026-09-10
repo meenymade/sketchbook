@@ -146,6 +146,68 @@
     frame();
   }
 
+
+  /* ── 작업물 경로 규칙 ────────────────────────────────────── */
+
+  // file 을 적지 않으면 works/번호.html 로 봅니다
+  function resolveFile(w) {
+    return w.file || "works/" + w.id + ".html";
+  }
+
+  /* ── 실시간 축소 미리보기 ────────────────────────────────── */
+
+  var SHOT_WIDTH = 1440;   // 데스크톱 화면 폭 기준으로 띄운 뒤 카드 크기로 줄입니다
+
+  function startPreviews(scope) {
+    var shots = Array.prototype.slice.call(scope.querySelectorAll(".card__shot"));
+    if (!shots.length) return;
+
+    function fit(shot) {
+      var w = shot.clientWidth;
+      if (w) shot.style.setProperty("--s", (w / SHOT_WIDTH).toFixed(4));
+    }
+
+    if ("ResizeObserver" in window) {
+      var ro = new ResizeObserver(function (entries) {
+        entries.forEach(function (e) { fit(e.target); });
+      });
+      shots.forEach(function (shot) { ro.observe(shot); });
+    } else {
+      window.addEventListener("resize", function () { shots.forEach(fit); });
+    }
+    shots.forEach(fit);
+
+    function load(shot) {
+      if (shot.firstChild) return;
+      var frame = document.createElement("iframe");
+      frame.setAttribute("scrolling", "no");
+      frame.setAttribute("tabindex", "-1");
+      frame.setAttribute("aria-hidden", "true");
+      frame.addEventListener("load", function () { shot.classList.add("is-ready"); });
+      frame.src = shot.dataset.src;
+      shot.appendChild(frame);
+    }
+
+    function unload(shot) {
+      shot.classList.remove("is-ready");
+      shot.innerHTML = "";
+    }
+
+    // 화면 가까이 온 카드만 실행하고, 멀어지면 정지시킵니다
+    if (!("IntersectionObserver" in window)) {
+      shots.forEach(load);
+      return;
+    }
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { load(e.target); } else { unload(e.target); }
+      });
+    }, { rootMargin: "600px 0px" });
+
+    shots.forEach(function (shot) { io.observe(shot); });
+  }
+
   /* ── 갤러리 그리기 ───────────────────────────────────────── */
 
   function escapeHtml(s) {
@@ -167,6 +229,13 @@
       return;
     }
 
+    function shotMarkup(w) {
+      // thumb 을 적었으면 그 이미지를, 아니면 작업물 화면을 그대로 축소해 보여 줍니다
+      return w.thumb
+        ? '<img class="card__img" src="' + escapeHtml(w.thumb) + '" alt="" loading="lazy">'
+        : '<div class="card__shot" data-src="' + escapeHtml(resolveFile(w)) + '"></div>';
+    }
+
     var amps = [0, 24];  // 열마다 다른 패럴랙스 세기 (2열 기준)
 
     grid.innerHTML = list.map(function (w, i) {
@@ -174,7 +243,7 @@
         '<a class="card" href="work.html?id=' + encodeURIComponent(w.id) + '"',
         '   data-cursor="OPEN" data-delay="' + (i % 2) + '" data-amp="' + amps[i % 2] + '">',
         '  <div class="card__frame">',
-        '    <img class="card__img" src="' + escapeHtml(w.thumb) + '" alt="" loading="lazy">',
+        '    ' + shotMarkup(w),
         '    <div class="card__title">' + escapeHtml(w.title) + '</div>',
         '  </div>',
         '  <div class="card__meta"><span>SKB&mdash;' + escapeHtml(w.id) + '</span><span>' + escapeHtml(w.year) + '</span></div>',
@@ -185,6 +254,7 @@
     var cards = Array.prototype.slice.call(grid.querySelectorAll(".card"));
     startReveal(cards);
     startParallax(cards);
+    startPreviews(grid);
   }
 
   /* ── 상세 화면 그리기 ────────────────────────────────────── */
@@ -209,14 +279,15 @@
     document.getElementById("caption-title").textContent = work.title;
     document.getElementById("caption-desc").textContent = work.desc || "";
 
+    var src = resolveFile(work);
     var open = document.getElementById("caption-open");
-    open.setAttribute("href", work.file);
+    open.setAttribute("href", src);
 
     var frame = document.createElement("iframe");
     frame.setAttribute("title", work.title);
     frame.setAttribute("loading", "lazy");
     frame.addEventListener("load", function () { box.classList.add("is-ready"); });
-    frame.src = work.file;
+    frame.src = src;
     box.appendChild(frame);
 
     setTimeout(function () { box.classList.add("is-ready"); }, 6000);
