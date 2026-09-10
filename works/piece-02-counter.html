@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tally</title>
+<style>
+  html, body{
+    margin:0; height:100%;
+    background:#F1EFE9;
+    display:flex; align-items:center; justify-content:center;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .wrap{ text-align:center; }
+  .count{
+    font-family: Georgia, serif;
+    font-size: 6rem;
+    color:#17181C;
+    margin: 0 0 1.2rem;
+    min-width: 4ch;
+  }
+  .row{ display:flex; gap: 0.75rem; justify-content:center; }
+  button{
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 0.6rem 1.3rem;
+    border: 1px solid #17181C;
+    background: transparent;
+    color: #17181C;
+    cursor: pointer;
+  }
+  button:hover{ background:#17181C; color:#F1EFE9; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="count" id="n">0</p>
+  <div class="row">
+    <button id="minus">−1</button>
+    <button id="reset">reset</button>
+    <button id="plus">+1</button>
+  </div>
+</div>
+<script>
+  let n = 0;
+  const el = document.getElementById('n');
+  document.getElementById('plus').onclick = () => { n++; el.textContent = n; };
+  document.getElementById('minus').onclick = () => { n--; el.textContent = n; };
+  document.getElementById('reset').onclick = () => { n = 0; el.textContent = n; };
+</script>
+</body>
+</html>
