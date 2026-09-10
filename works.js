@@ -30,5 +30,5 @@ const WORKS = [
    이메일이라면 href 앞에 mailto: 를 붙여 주세요. */
 const CONTACT = {
   label: "CONTACT",
-  href: "mailto:your@email.com",
+  href: "mailto:meenymade@gmail.com",
 };
