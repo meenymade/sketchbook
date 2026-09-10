@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WAVE STUDY</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b0b0b; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <script>
+    var c = document.getElementById("c");
+    var ctx = c.getContext("2d");
+    var t = 0;
+
+    function resize() {
+      c.width = c.clientWidth;
+      c.height = c.clientHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    function draw() {
+      var w = c.width, h = c.height;
+      ctx.fillStyle = "#0b0b0b";
+      ctx.fillRect(0, 0, w, h);
+
+      for (var i = 0; i < 90; i++) {
+        var p = i / 90;
+        var y = h * 0.28 + p * h * 0.72;
+        var amp = 3 + p * 26;
+        var light = Math.round(30 + p * 130 * (0.5 + 0.5 * Math.sin(t * 0.6 + i * 0.35)));
+        ctx.strokeStyle = "rgba(" + light + "," + light + "," + light + ",0.5)";
+        ctx.lineWidth = 0.6 + p * 1.6;
+        ctx.beginPath();
+        for (var x = 0; x <= w; x += 8) {
+          var yy = y + Math.sin(x * 0.006 + t + i * 0.5) * amp
+                     + Math.sin(x * 0.017 - t * 1.4 + i) * amp * 0.4;
+          x === 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+        }
+        ctx.stroke();
+      }
+
+      var img = ctx.getImageData(0, 0, w, h);
+      var d = img.data;
+      for (var k = 0; k < d.length; k += 4) {
+        var n = (Math.random() - 0.5) * 46;
+        d[k] += n; d[k + 1] += n; d[k + 2] += n;
+      }
+      ctx.putImageData(img, 0, 0);
+
+      t += 0.012;
+      requestAnimationFrame(draw);
+    }
+    draw();
+  </script>
+</body>
+</html>

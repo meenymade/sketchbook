@@ -4,21 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SKETCHBOOK</title>
-  <meta name="description" content="SKETCHBOOK — index">
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
-  <!-- 진입 시퀀스 -->
-  <div class="boot" id="boot">
-    <div>
-      <p>&gt; INIT SKETCHBOOK</p>
-      <p>&gt; LOADING INDEX</p>
-      <p>&gt; ACCESS GRANTED</p>
-    </div>
-  </div>
-
-  <!-- 질감 레이어 -->
   <div class="fx" aria-hidden="true">
     <div class="fx__grain"></div>
     <div class="fx__scan"></div>
@@ -26,7 +15,6 @@
     <div class="fx__flicker"></div>
   </div>
 
-  <!-- 십자선 커서 -->
   <div class="cursor" id="cursor" aria-hidden="true">
     <i class="cursor__x"></i>
     <i class="cursor__y"></i>
@@ -34,7 +22,6 @@
     <span class="cursor__label"></span>
   </div>
 
-  <!-- 네 귀퉁이 HUD -->
   <div class="hud" aria-hidden="true">
     <span class="hud__tl" id="hud-time">--:--:-- UTC</span>
     <span class="hud__tr" id="hud-session">SESSION ------</span>
@@ -43,16 +30,34 @@
   </div>
 
   <main class="page">
-    <header class="masthead">
-      <h1 class="logo">Sketchbook</h1>
-      <p class="masthead__meta"><span id="count">000</span> items / index</p>
-    </header>
+    <div class="detail">
 
-    <section class="grid" id="grid"></section>
+      <nav class="detail__nav">
+        <a href="index.html" data-cursor="BACK">&larr; index</a>
+        <span id="caption-id">SKB&mdash;000</span>
+      </nav>
 
-    <footer class="foot">
-      <a id="contact" href="#">CONTACT</a>
-    </footer>
+      <div class="stage" id="stage">
+        <i class="mark"></i>
+        <div class="stage__box" id="stage-box">
+          <div class="stage__loading">ESTABLISHING CONNECTION&hellip;</div>
+        </div>
+      </div>
+
+      <section class="caption">
+        <div class="caption__id">WORK</div>
+        <div>
+          <h2 id="caption-title">&nbsp;</h2>
+          <p id="caption-desc"></p>
+          <a class="caption__open" id="caption-open" href="#" target="_blank" rel="noopener" data-cursor="FULL">open full &rarr;</a>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <a id="contact" href="#">CONTACT</a>
+      </footer>
+
+    </div>
   </main>
 
   <script src="works.js"></script>
