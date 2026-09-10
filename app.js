@@ -46,7 +46,6 @@
         </span>
         <span class="meta">
           <h2>${work.title}</h2>
-          <p>${work.description}</p>
           <span class="line"><span class="tag">${work.tag}</span> · ${work.year}</span>
         </span>
       `;

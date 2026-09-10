@@ -25,7 +25,6 @@ gallery/
   title: "작업물 제목",
   tag: "Visual",              // Visual / Interactive / App 등 자유롭게
   year: "2026",
-  description: "한두 문장 설명.",
   url: "works/my-new-piece.html"
 }
 ```
