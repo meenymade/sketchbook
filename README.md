@@ -1,9 +1,11 @@
 # 갤러리 사용 가이드
 
+저장소/링크 이름: **sketchbook**
+
 ## 폴더 구조
 
 ```
-gallery/
+sketchbook/
 ├── index.html         (건드릴 필요 없음)
 ├── styles.css          (디자인, 건드릴 필요 없음)
 ├── app.js              (렌더링 로직, 건드릴 필요 없음)
@@ -45,13 +47,13 @@ gallery/
 
 ### 1순위 — GitHub Pages
 - 완전 무료, 트래픽 제한도 넉넉함
-- `gallery` 폴더를 GitHub 저장소에 올리기만 하면 자동으로 웹사이트가 됩니다
+- `sketchbook` 폴더를 GitHub 저장소에 올리기만 하면 자동으로 웹사이트가 됩니다
 - Claude Code를 쓰면 "이 폴더 GitHub에 올리고 Pages로 배포해줘" 한 마디로 연결 가능
 - 주소는 `내아이디.github.io/저장소이름` 형태 (커스텀 도메인 연결도 가능)
 
 **순서 요약**
 1. github.com에서 새 저장소 생성 (public)
-2. `gallery` 폴더 안의 파일들을 저장소에 업로드 (웹 브라우저에서 드래그앤드롭으로도 가능)
+2. `sketchbook` 폴더 안의 파일들을 저장소에 업로드 (웹 브라우저에서 드래그앤드롭으로도 가능)
 3. 저장소 Settings → Pages → Branch를 `main`으로 설정하고 저장
 4. 몇 분 뒤 `https://내아이디.github.io/저장소이름` 으로 접속 확인
 
@@ -62,7 +64,7 @@ gallery/
 
 **순서 요약**
 1. netlify.com 가입
-2. 대시보드에서 "Deploy manually" 영역에 `gallery` 폴더 통째로 드래그앤드롭
+2. 대시보드에서 "Deploy manually" 영역에 `sketchbook` 폴더 통째로 드래그앤드롭
 3. 바로 주소 생성됨. 이후 파일이 바뀔 때마다 다시 드래그앤드롭하거나 GitHub 연동으로 자동화 가능
 
 ### 3순위 — Cloudflare Pages

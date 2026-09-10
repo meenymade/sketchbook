@@ -2,8 +2,8 @@
   const catalog = document.getElementById('catalog');
   const filtersEl = document.getElementById('filters');
 
-  const tags = ['전체', ...Array.from(new Set(WORKS.map(w => w.tag)))];
-  let active = '전체';
+  const tags = ['All', ...Array.from(new Set(WORKS.map(w => w.tag)))];
+  let active = 'All';
 
   function renderFilters(){
     filtersEl.innerHTML = '';
@@ -22,12 +22,12 @@
 
   function renderCatalog(){
     catalog.innerHTML = '';
-    const items = active === '전체' ? WORKS : WORKS.filter(w => w.tag === active);
+    const items = active === 'All' ? WORKS : WORKS.filter(w => w.tag === active);
 
     if(items.length === 0){
       const empty = document.createElement('p');
       empty.className = 'empty';
-      empty.textContent = '아직 이 분류의 작업물이 없습니다.';
+      empty.textContent = 'Nothing here yet.';
       catalog.appendChild(empty);
       return;
     }
@@ -40,13 +40,13 @@
       a.rel = 'noopener';
 
       a.innerHTML = `
-        <span class="num">No. ${work.number}</span>
         <span class="frame">
-          <iframe src="${work.url}" loading="lazy" tabindex="-1" title="${work.title} 미리보기"></iframe>
-        </span>
-        <span class="meta">
-          <h2>${work.title}</h2>
-          <span class="line"><span class="tag">${work.tag}</span> · ${work.year}</span>
+          <iframe src="${work.url}" loading="lazy" tabindex="-1" title="${work.title} preview"></iframe>
+          <span class="index">${work.number}</span>
+          <span class="label">
+            <span class="title">${work.title}</span>
+            <span class="meta">${work.tag} · ${work.year}</span>
+          </span>
         </span>
       `;
 
