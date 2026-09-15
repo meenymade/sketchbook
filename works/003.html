@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>XMAS-TREE-100 · 2-Layer PCB</title>
+<style>
+  :root{
+    --bg:#131618; --panel:rgba(22,26,29,.84); --line:rgba(176,192,186,.15);
+    --txt:#b5bebb; --txt-dim:#76817d; --accent:#8aa896;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);overflow:hidden}
+  body{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Apple SD Gothic Neo",monospace;color:var(--txt)}
+  #app{position:fixed;inset:0}
+  canvas{display:block;touch-action:none}
+  .hud{position:fixed;z-index:10;font-size:11px;line-height:1.6;letter-spacing:.02em}
+  #title{top:18px;left:20px;pointer-events:none}
+  #title h1{margin:0;font-size:12.5px;font-weight:600;color:#ccd5d0;letter-spacing:.07em}
+  #title p{margin:3px 0 0;color:var(--txt-dim);font-size:10.5px}
+  #panel{bottom:18px;left:20px;width:212px;background:var(--panel);
+         border:1px solid var(--line);border-radius:10px;padding:0 0 9px;
+         backdrop-filter:blur(10px);box-shadow:0 10px 34px rgba(0,0,0,.42)}
+
+  .phead{display:flex;align-items:center;gap:7px;padding:9px 11px 8px;
+         border-bottom:1px solid var(--line)}
+  .dot{display:inline-block;flex:0 0 auto;width:6px;height:6px;border-radius:50%;background:var(--accent);
+       box-shadow:0 0 7px var(--accent);animation:bp 2.6s ease-in-out infinite}
+  @keyframes bp{0%,100%{opacity:.35}50%{opacity:1}}
+  .phead b{font-size:10px;font-weight:600;letter-spacing:.14em;color:#ccd5d0}
+  .phead .fps{margin-left:auto;font-size:9px;color:var(--txt-dim);
+              font-variant-numeric:tabular-nums}
+
+  .sect{padding:9px 11px 0}
+  .slab{font-size:8.5px;letter-spacing:.18em;color:#5f6a66;margin:0 0 6px}
+
+  button{appearance:none;width:100%;text-align:left;background:rgba(255,255,255,.028);
+         border:1px solid var(--line);color:var(--txt);font:inherit;font-size:10.5px;
+         letter-spacing:.02em;padding:5.5px 8px;border-radius:5px;cursor:pointer;
+         transition:background .15s,border-color .15s,color .15s;display:flex;
+         justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+  button:hover{background:rgba(255,255,255,.07);border-color:rgba(176,192,186,.32)}
+  button:active{transform:translateY(.5px)}
+  button .st{color:var(--txt-dim);font-size:9px;letter-spacing:.08em;
+             font-variant-numeric:tabular-nums}
+  button.on{border-color:rgba(138,168,150,.42);background:rgba(138,168,150,.07)}
+  button.on .st{color:var(--accent)}
+
+  .meter{height:3px;border-radius:2px;background:rgba(255,255,255,.055);
+         overflow:hidden;margin:7px 0 4px}
+  .meter i{display:block;height:100%;width:0%;background:var(--accent);
+           opacity:.75;transition:width .18s linear}
+  .mrow{display:flex;justify-content:space-between;font-size:8.5px;
+        letter-spacing:.12em;color:#5f6a66}
+  .mrow em{font-style:normal;color:var(--txt-dim)}
+
+  .player{border:1px solid var(--line);border-radius:6px;padding:7px 8px 8px;
+          background:rgba(255,255,255,.022)}
+  .ptrack{font-size:9.5px;letter-spacing:.07em;color:var(--txt);margin-bottom:6px;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pbar{height:3px;border-radius:2px;background:rgba(255,255,255,.075);
+        cursor:pointer;position:relative}
+  .pbar:hover{background:rgba(255,255,255,.12)}
+  .pbar i{display:block;height:100%;width:0%;border-radius:2px;background:var(--accent);opacity:.85}
+  .ptime{display:flex;justify-content:space-between;font-size:8.5px;color:#5f6a66;
+         margin:4px 0 6px;font-variant-numeric:tabular-nums;letter-spacing:.06em}
+  .pctl{display:flex;align-items:center;justify-content:center;gap:6px}
+  .pctl button{width:auto;flex:0 0 auto;margin:0;padding:4px 0;min-width:34px;
+               justify-content:center;font-size:10px;letter-spacing:.06em;color:var(--txt-dim)}
+  .pctl button:hover{color:var(--txt)}
+  .pctl button.main{min-width:44px;font-size:11px;color:var(--txt);
+                    border-color:rgba(138,168,150,.34);background:rgba(138,168,150,.08)}
+  .pctl button.main.playing{border-color:rgba(138,168,150,.5);color:var(--accent)}
+  .pvol{display:flex;align-items:center;gap:7px;margin-top:8px}
+  .pvol span{font-size:8.5px;letter-spacing:.14em;color:#5f6a66}
+
+  input[type=range]{appearance:none;width:100%;height:3px;border-radius:2px;
+                    background:rgba(255,255,255,.08);outline:none;margin:2px 0 0}
+  input[type=range]::-webkit-slider-thumb{appearance:none;width:9px;height:9px;
+        border-radius:50%;background:var(--accent);cursor:pointer;opacity:.8}
+
+  .hint{padding:9px 11px 0;margin-top:8px;border-top:1px solid var(--line);
+        color:#5f6a66;font-size:9px;line-height:1.85;letter-spacing:.04em}
+  .hint b{color:var(--txt-dim);font-weight:500}
+  #bom{top:18px;right:20px;background:var(--panel);border:1px solid var(--line);
+       border-radius:8px;padding:10px 12px;backdrop-filter:blur(8px);max-width:300px}
+  #bom h2{margin:0 0 7px;font-size:10.5px;font-weight:600;color:#ccd5d0;letter-spacing:.08em}
+  #bom table{border-collapse:collapse;width:100%;font-size:10px}
+  #bom td{padding:2.5px 0;vertical-align:top;color:var(--txt-dim)}
+  #bom td.r{color:var(--txt);width:50px;white-space:nowrap}
+  #bom td.q{text-align:right;width:22px}
+  #bom .foot{margin-top:8px;padding-top:7px;border-top:1px solid var(--line);
+             font-size:9.5px;color:var(--txt-dim);line-height:1.75}
+  #loading{position:fixed;inset:0;display:grid;place-items:center;z-index:20;
+           background:var(--bg);color:var(--txt-dim);font-size:11px;letter-spacing:.1em}
+  #loading.hide{opacity:0;pointer-events:none;transition:opacity .5s}
+  @media (max-width:880px){ #bom{display:none} #title{top:12px;left:14px} #panel{bottom:12px;left:14px;padding:8px} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="loading">LOADING&nbsp;&nbsp;/&nbsp;&nbsp;XMAS-TREE-100</div>
+
+<div class="hud" id="title">
+  <h1>XMAS-TREE-100 · REV 1.0</h1>
+  <p>100 × 100 mm · 2 layer · 1.6 t · 1 oz Cu · HASL LF · USB-C 5 V</p>
+</div>
+
+<div class="hud" id="panel">
+  <div class="phead"><i class="dot"></i><b>CONTROL</b><span class="fps" id="fps">-- fps</span></div>
+
+  <div class="sect">
+    <div class="slab">DRIVE</div>
+    <button id="bPower" class="on">점등 SW1<span class="st">ON</span></button>
+    <button id="bPattern">패턴<span class="st">TWINKLE</span></button>
+  </div>
+
+  <div class="sect">
+    <div class="slab">LAYERS</div>
+    <button id="bSilk" class="on">실크스크린<span class="st">ON</span></button>
+    <button id="bParts" class="on">부품<span class="st">ON</span></button>
+    <button id="bLabel">지정자<span class="st">OFF</span></button>
+  </div>
+
+  <div class="sect">
+    <div class="slab">VIEW</div>
+    <button id="bSpin">자동 회전<span class="st">OFF</span></button>
+    <button id="bFlip">면 전환<span class="st">TOP</span></button>
+    <button id="bMood" class="on">감성 효과<span class="st">ON</span></button>
+    <button id="bReset">시점 초기화<span class="st">⤾</span></button>
+    <div class="meter"><i id="focusBar"></i></div>
+    <div class="mrow"><span>FOCUS</span><em id="focusVal">SHARP</em></div>
+  </div>
+
+  <div class="sect">
+    <div class="slab">AUDIO · 8-BIT CAROL</div>
+    <div class="player">
+      <div class="ptrack" id="trackName">JINGLE BELLS</div>
+      <div class="pbar" id="pbar"><i id="pfill"></i></div>
+      <div class="ptime"><span id="pcur">0:00</span><span id="pdur">0:00</span></div>
+      <div class="pctl">
+        <button id="bPrev" title="이전 곡">◀◀</button>
+        <button id="bPlay" class="main" title="재생 / 일시정지">▶</button>
+        <button id="bNext" title="다음 곡">▶▶</button>
+      </div>
+      <div class="pvol"><span>VOL</span>
+        <input id="vol" type="range" min="0" max="100" value="45" aria-label="volume"></div>
+    </div>
+  </div>
+
+  <div class="hint">
+    <b>드래그</b> 회전 · <b>휠</b> 줌<br>
+    <b>우클릭 드래그</b> 이동
+  </div>
+</div>
+
+<div class="hud" id="bom">
+  <h2>BILL OF MATERIALS</h2>
+  <table>
+    <tr><td class="r">U1</td><td>ATtiny85V-10SU · SOIC-8</td><td class="q">1</td></tr>
+    <tr><td class="r">D1</td><td>LED 0805 amber (star)</td><td class="q">1</td></tr>
+    <tr><td class="r">D2–D21</td><td>LED 0805 R/G/B/A</td><td class="q">20</td></tr>
+    <tr><td class="r">R1–R3</td><td>RES 0805 470 Ω 1 % · PB0</td><td class="q">3</td></tr>
+    <tr><td class="r">R4–R6</td><td>RES 0805 470 Ω 1 % · PB1</td><td class="q">3</td></tr>
+    <tr><td class="r">R7–R10</td><td>RES 0805 620 Ω 1 % · PB2</td><td class="q">4</td></tr>
+    <tr><td class="r">R11–R15</td><td>RES 0805 750 Ω 1 % · PB3</td><td class="q">5</td></tr>
+    <tr><td class="r">R16–R21</td><td>RES 0805 910 Ω 1 % · PB4</td><td class="q">6</td></tr>
+    <tr><td class="r">R23, R24</td><td>RES 0805 5.1 kΩ · CC pull-down</td><td class="q">2</td></tr>
+    <tr><td class="r">R22</td><td>RES 0805 10 kΩ · RESET pull-up</td><td class="q">1</td></tr>
+    <tr><td class="r">C1, C3</td><td>CAP 0805 100 nF X7R 25 V</td><td class="q">2</td></tr>
+    <tr><td class="r">C2</td><td>CAP elec. 10 µF 16 V ⌀5</td><td class="q">1</td></tr>
+    <tr><td class="r">D22</td><td>Schottky SOD-123 · 40 V 0.5 A</td><td class="q">1</td></tr>
+    <tr><td class="r">F1</td><td>PTC fuse 0805 · 0.5 A hold</td><td class="q">1</td></tr>
+    <tr><td class="r">J2</td><td>USB-C 2.0 receptacle · 16P SMD</td><td class="q">1</td></tr>
+    <tr><td class="r">SW1</td><td>SPDT slide switch</td><td class="q">1</td></tr>
+    <tr><td class="r">J1</td><td>ISP header 2×3 · 2.54 mm</td><td class="q">1</td></tr>
+    <tr><td class="r">TP1–TP4</td><td>Test point ⌀1.9 exposed</td><td class="q">4</td></tr>
+    <tr><td class="r">H1–H4</td><td>Mounting hole ⌀3.2</td><td class="q">4</td></tr>
+  </table>
+  <div class="foot">
+    VBUS 5 V 레일이 트리 외곽을 따라 주행<br>
+    LED 21개 각각 직렬 저항 · 포트당 20 mA 이하<br>
+    U1 5개 포트가 가지 5단을 싱크 구동<br>
+    GND 폴리곤 + 비아 스티칭 (Ø0.6 / 8 mm 피치)<br>
+    Gerber RS-274X + NC drill 호환 구성
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls }   from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer }  from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass }      from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass }      from 'three/addons/postprocessing/OutputPass.js';
+import { BokehPass }     from 'three/addons/postprocessing/BokehPass.js';
+import { ShaderPass }    from 'three/addons/postprocessing/ShaderPass.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ══════════════════════════════════════════════════════════════
+   0. 치수 / 레이어 — 단위 mm, 실제 제조 치수
+   ══════════════════════════════════════════════════════════════ */
+const BOARD = 100, TH = 1.6;
+const FZ =  TH/2, BZ = -TH/2;
+
+const Z_POUR = FZ + 0.020;   // GND 폴리곤 (동박)
+const Z_GAP  = FZ + 0.028;   // 클리어런스 간극 (동박 없는 FR-4)
+const Z_TRC  = FZ + 0.036;   // 신호 / 전원 트레이스
+const Z_OPEN = FZ + 0.046;   // 솔더마스크 개구부
+const Z_PAD  = FZ + 0.054;   // 노출 패드 (HASL)
+const Z_SILK = FZ + 0.066;   // 실크스크린
+const Z_CMP  = FZ + 0.076;   // 부품 착좌면
+
+/* 낮은 채도 팔레트 */
+const C = {
+  fr4  : 0x1b2b24,   // 동박이 없는 부분 (마스크 + FR-4)
+  cu   : 0x3a5a4b,   // 동박 위 마스크 (밝은 초록)
+  cuB  : 0x2f4a3d,   // 뒷면 동박
+  gap  : 0x152420,   // 클리어런스 간극
+  pad  : 0x949b9d,   // HASL 무연
+  padD : 0x6b7174,
+  gold : 0x8f8154,
+  silk : 0xbdc4bd,
+  drill: 0x0e1613,
+};
+const LED = { red:0xa8564e, grn:0x6e9575, blu:0x6a87a4, amb:0xbd9f66, star:0xd6c288 };
+
+/* ══════════════════════════════════════════════════════════════
+   1. 렌더러 / 씬
+   ══════════════════════════════════════════════════════════════ */
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.04;
+document.getElementById('app').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x131618);
+
+const camera = new THREE.PerspectiveCamera(33, innerWidth/innerHeight, 1, 1200);
+camera.position.set(26, 20, 190);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.07;
+controls.minDistance = 55; controls.maxDistance = 420;
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.06).texture;
+scene.environmentIntensity = 0.32;
+
+scene.add(new THREE.HemisphereLight(0x8b98a0, 0x0c0f11, 0.52));
+const key = new THREE.DirectionalLight(0xdde5e3, 1.12); key.position.set(-70, 95, 130); scene.add(key);
+const fil = new THREE.DirectionalLight(0x9aabaa, 0.40); fil.position.set(115, -45, 70);  scene.add(fil);
+const rim = new THREE.DirectionalLight(0x7d8f8d, 0.48); rim.position.set(20, 40, -140);  scene.add(rim);
+
+/* 배경 — 평평한 단색 대신 은은한 방사형 그라디언트 */
+{
+  const cv = document.createElement('canvas'); cv.width = cv.height = 512;
+  const g2 = cv.getContext('2d');
+  const grd = g2.createRadialGradient(256,232,40, 256,256,300);
+  grd.addColorStop(0.00,'#1f262a');
+  grd.addColorStop(0.45,'#171c1f');
+  grd.addColorStop(1.00,'#0d1012');
+  g2.fillStyle = grd; g2.fillRect(0,0,512,512);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const bg = new THREE.Mesh(new THREE.PlaneGeometry(1100,1100),
+    new THREE.MeshBasicMaterial({ map:tex, depthWrite:false }));
+  bg.position.z = -340; scene.add(bg);
+}
+
+/* 공기 중 미세 먼지 — 빛을 받아 아주 약하게 반짝인다 */
+const DUST_N = 240;
+const dustPos = new Float32Array(DUST_N*3);
+const dustSeed = new Float32Array(DUST_N);
+for(let i=0;i<DUST_N;i++){
+  dustPos[i*3  ] = (Math.random()-0.5)*280;
+  dustPos[i*3+1] = (Math.random()-0.5)*260;
+  dustPos[i*3+2] = (Math.random()-0.5)*150 + 20;
+  dustSeed[i] = Math.random()*Math.PI*2;
+}
+const dustGeo = new THREE.BufferGeometry();
+dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos,3));
+const dustTex = (function(){
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const c = cv.getContext('2d');
+  const g = c.createRadialGradient(32,32,0, 32,32,32);
+  g.addColorStop(0.00,'rgba(255,255,255,1)');
+  g.addColorStop(0.28,'rgba(255,255,255,0.55)');
+  g.addColorStop(0.62,'rgba(255,255,255,0.14)');
+  g.addColorStop(1.00,'rgba(255,255,255,0)');
+  c.fillStyle = g; c.fillRect(0,0,64,64);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
+const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+  map:dustTex, size:2.6, color:0xa9bdb2, transparent:true, opacity:0.30,
+  blending:THREE.AdditiveBlending, depthWrite:false, depthTest:false,
+  sizeAttenuation:true }));
+dust.renderOrder = 5;
+scene.add(dust);
+
+/* ══════════════════════════════════════════════════════════════
+   2. 머티리얼 / 레이어 그룹
+   ══════════════════════════════════════════════════════════════ */
+const M = {
+  fr4  : new THREE.MeshStandardMaterial({ color:C.fr4,  roughness:0.62, metalness:0.06 }),
+  cu   : new THREE.MeshStandardMaterial({ color:C.cu,   roughness:0.44, metalness:0.26 }),
+  cuB  : new THREE.MeshStandardMaterial({ color:C.cuB,  roughness:0.50, metalness:0.22 }),
+  gap  : new THREE.MeshStandardMaterial({ color:C.gap,  roughness:0.70, metalness:0.04 }),
+  pad  : new THREE.MeshStandardMaterial({ color:C.pad,  roughness:0.40, metalness:0.88 }),
+  padD : new THREE.MeshStandardMaterial({ color:C.padD, roughness:0.52, metalness:0.78 }),
+  gold : new THREE.MeshStandardMaterial({ color:C.gold, roughness:0.32, metalness:0.92 }),
+  silk : new THREE.MeshStandardMaterial({ color:C.silk, roughness:0.93, metalness:0.00 }),
+  drill: new THREE.MeshStandardMaterial({ color:C.drill,roughness:0.80, metalness:0.30 }),
+  ic   : new THREE.MeshStandardMaterial({ color:0x2a2d2f, roughness:0.44, metalness:0.12 }),
+  res  : new THREE.MeshStandardMaterial({ color:0x2b2723, roughness:0.48, metalness:0.06 }),
+  sw   : new THREE.MeshStandardMaterial({ color:0xb0aca2, roughness:0.56, metalness:0.05 }),
+  elec : new THREE.MeshStandardMaterial({ color:0x26303a, roughness:0.40, metalness:0.30 }),
+  blk  : new THREE.MeshStandardMaterial({ color:0x191c1e, roughness:0.60, metalness:0.10 }),
+};
+
+const rig    = new THREE.Group(); scene.add(rig);   // 미세 표류용 상위 그룹
+const board  = new THREE.Group(); rig.add(board);
+const gCu    = new THREE.Group(); board.add(gCu);
+const gSilk  = new THREE.Group(); board.add(gSilk);
+const gPart  = new THREE.Group(); board.add(gPart);
+const gLabel = new THREE.Group(); gLabel.visible = false; board.add(gLabel);
+
+/* ── 기본 도형 ───────────────────────────────────────────────── */
+function plate(w,h,z,mat,x=0,y=0,rot=0,parent=gCu){
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), mat);
+  m.position.set(x,y,z); m.rotation.z = rot; parent.add(m); return m;
+}
+function disc(r,z,mat,x=0,y=0,seg=22,parent=gCu){
+  const m = new THREE.Mesh(new THREE.CircleGeometry(r,seg), mat);
+  m.position.set(x,y,z); parent.add(m); return m;
+}
+function stroke(pts,w,z,mat,parent=gCu,cap=true){
+  for(let i=0;i<pts.length-1;i++){
+    const p1=pts[i], p2=pts[i+1];
+    const dx=p2[0]-p1[0], dy=p2[1]-p1[1], len=Math.hypot(dx,dy);
+    if(len<1e-4) continue;
+    plate(len,w,z,mat,(p1[0]+p2[0])/2,(p1[1]+p2[1])/2,Math.atan2(dy,dx),parent);
+  }
+  if(cap) for(const p of pts) disc(w/2,z+0.0008,mat,p[0],p[1],14,parent);
+}
+function outlineS(pts,w,z,mat,parent){
+  stroke([...pts,pts[0]], w, z ?? Z_SILK, mat ?? M.silk, parent ?? gSilk);
+}
+
+/* ── 트레이스: 클리어런스 간극 + 동박을 함께 그린다 ──────────────
+   실물 기판에서 배선이 보이는 원리 그대로. GND 폴리곤에 0.25 mm
+   클리어런스가 뚫리고 그 안쪽에 배선 동박이 놓인다.                */
+const CLEAR = 0.5;
+const netPaths = [];
+function route(pts,w,opt){
+  stroke(pts, w+CLEAR, Z_GAP, M.gap, gCu, true);
+  stroke(pts, w,       Z_TRC, M.cu,  gCu, true);
+  if(!opt || opt.keepout !== false) netPaths.push({ pts:pts, r:(w+CLEAR)/2 + 1.3 });
+}
+
+/* ── 패드 ───────────────────────────────────────────────────── */
+function smdPad(x,y,w,h,rot){
+  plate(w+0.5,h+0.5,Z_GAP ,M.gap,x,y,rot);
+  plate(w+0.3,h+0.3,Z_OPEN,M.gap,x,y,rot);
+  plate(w,    h,    Z_PAD ,M.pad,x,y,rot);
+}
+function roundPad(x,y,rOut,rDrill,mat){
+  const mt = mat ?? M.pad;
+  disc(rOut+0.30,Z_GAP ,M.gap,x,y,24);
+  disc(rOut+0.15,Z_OPEN,M.gap,x,y,24);
+  disc(rOut,     Z_PAD ,mt   ,x,y,24);
+  if(rDrill>0) disc(rDrill,Z_PAD+0.002,M.drill,x,y,20);
+  disc(rOut,BZ-0.060,mt,x,y,24).rotation.y = Math.PI;
+  if(rDrill>0) disc(rDrill,BZ-0.062,M.drill,x,y,20).rotation.y = Math.PI;
+}
+function stitchVia(x,y){
+  disc(0.62,Z_GAP,M.gap,x,y,14);
+  disc(0.45,Z_TRC,M.pad,x,y,14);
+  disc(0.30,Z_TRC+0.002,M.drill,x,y,12);
+  disc(0.45,BZ-0.060,M.pad,x,y,14).rotation.y = Math.PI;
+}
+
+/* ── 실크스크린 문자 ───────────────────────────────────────── */
+const texCache = new Map();
+function textTex(str,color,bold,kern){
+  const k = str + '|' + color + '|' + bold + '|' + kern;
+  if(texCache.has(k)) return texCache.get(k);
+  const F = 88, pad = 12;
+  const cv = document.createElement('canvas');
+  const mc = cv.getContext('2d');
+  const font = (bold?700:500) + ' ' + F + 'px ui-monospace, Menlo, Consolas, monospace';
+  mc.font = font;
+  const w = mc.measureText(str).width + str.length*F*kern;
+  cv.width = Math.ceil(w + pad*2); cv.height = Math.ceil(F*1.45);
+  const c2 = cv.getContext('2d');
+  c2.font = font; c2.fillStyle = color; c2.textBaseline = 'middle';
+  let px = pad;
+  for(const ch of str){ c2.fillText(ch, px, cv.height/2); px += c2.measureText(ch).width + F*kern; }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  tex.userData.aspect = cv.width/cv.height;
+  texCache.set(k, tex); return tex;
+}
+function textMesh(str,mm,opt){
+  const o = opt || {};
+  const tex = textTex(str, o.color || '#bdc4bd', !!o.bold, o.kern === undefined ? 0.06 : o.kern);
+  const h = mm*1.45;
+  return new THREE.Mesh(
+    new THREE.PlaneGeometry(h*tex.userData.aspect, h),
+    new THREE.MeshStandardMaterial({ map:tex, transparent:true, roughness:0.93,
+                                     metalness:0, depthWrite:false, alphaTest:0.12 }));
+}
+function silk(str,mm,x,y,opt){
+  const o = opt || {};
+  const m = textMesh(str,mm,o);
+  m.position.set(x, y, o.z === undefined ? Z_SILK : o.z);
+  m.rotation.z = o.rot || 0;
+  if(o.back){ m.rotation.y = Math.PI; m.position.z = BZ - 0.078; }
+  (o.parent || gSilk).add(m); return m;
+}
+/** 부품 지정자 — 실물 기판처럼 아주 작게 */
+function ref(str,x,y,rot){
+  silk(str, 1.15, x, y, { rot:rot||0, color:'#a9b1aa', kern:0.05 });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   3. 기판 본체 + GND 폴리곤
+   ══════════════════════════════════════════════════════════════ */
+function rrect(w,h,r){
+  const s = new THREE.Shape(), x=-w/2, y=-h/2;
+  s.moveTo(x+r,y);
+  s.lineTo(x+w-r,y);   s.quadraticCurveTo(x+w,y,   x+w,y+r);
+  s.lineTo(x+w,y+h-r); s.quadraticCurveTo(x+w,y+h, x+w-r,y+h);
+  s.lineTo(x+r,y+h);   s.quadraticCurveTo(x,y+h,   x,y+h-r);
+  s.lineTo(x,y+r);     s.quadraticCurveTo(x,y,     x+r,y);
+  return s;
+}
+const MOUNT = [[-44,44],[44,44],[-44,-44],[44,-44]];
+
+// 3-1. FR-4 본체 (마운팅 홀 실제 관통)
+{
+  const sh = rrect(BOARD,BOARD,3.5);
+  for(const m of MOUNT){
+    const h = new THREE.Path(); h.absarc(m[0],m[1],1.6,0,Math.PI*2,true); sh.holes.push(h);
+  }
+  const g = new THREE.ExtrudeGeometry(sh,{ depth:TH, bevelEnabled:false, curveSegments:26 });
+  g.translate(0,0,-TH/2);
+  board.add(new THREE.Mesh(g, M.fr4));
+}
+
+// 3-2 / 3-3. 앞·뒷면 GND 폴리곤 (외곽 0.8 mm 후퇴, 홀 주변 클리어런스)
+function pourShape(){
+  const sh = rrect(BOARD-1.6,BOARD-1.6,3.0);
+  for(const m of MOUNT){
+    const h = new THREE.Path(); h.absarc(m[0],m[1],3.3,0,Math.PI*2,true); sh.holes.push(h);
+  }
+  return sh;
+}
+{
+  const f = new THREE.Mesh(new THREE.ShapeGeometry(pourShape(),26), M.cu);
+  f.position.z = Z_POUR; gCu.add(f);
+  const b = new THREE.Mesh(new THREE.ShapeGeometry(pourShape(),26), M.cuB);
+  b.position.z = BZ - 0.020; b.rotation.y = Math.PI; gCu.add(b);
+}
+
+// 3-4. 마운팅 홀 패드 (GND 접속 + 서멀 릴리프 스포크)
+MOUNT.forEach(function(m,i){
+  const mx=m[0], my=m[1];
+  disc(3.1,Z_GAP ,M.gap,mx,my,26);
+  disc(2.9,Z_OPEN,M.gap,mx,my,26);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(1.6,2.7,28), M.padD);
+  ring.position.set(mx,my,Z_PAD); gCu.add(ring);
+  const rb = ring.clone(); rb.position.z = BZ-0.060; rb.rotation.y = Math.PI; gCu.add(rb);
+  for(let k=0;k<4;k++){
+    const a = Math.PI/4 + k*Math.PI/2;
+    plate(1.6,0.9,Z_TRC,M.cu,mx+Math.cos(a)*3.0,my+Math.sin(a)*3.0,a);
+  }
+  ref('H'+(i+1), mx + (mx>0?-5.6:5.6), my + (my>0?-4.8:4.8));
+  netPaths.push({ pts:[[mx,my]], r:5.8 });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   4. 트리 = 실제 배선
+      · 트리 외곽선 → VBUS 5 V 전원 레일 (1.4 mm)
+      · 줄기        → U1 포트 5가닥 버스 (0.5 mm)
+      · 가지        → LED 스트링 (0.8 mm)
+   ══════════════════════════════════════════════════════════════ */
+const ROWS = [
+  { y: 30, hw:  6, n: 2 },
+  { y: 20, hw: 12, n: 3 },
+  { y:  9, hw: 18, n: 4 },
+  { y: -3, hw: 24, n: 5 },
+  { y:-15, hw: 30, n: 6 }
+];
+const DROP = 6;
+const apexOf = function(r){ return [0, r.y+3]; };
+const endOf  = function(r,s){ return [s*r.hw, r.y+3-DROP]; };
+const onBranch = function(r,t){ return [t*r.hw, r.y+3-Math.abs(t)*DROP]; };
+
+/* 4-1. VBUS 레일 — J2(USB-C)에서 올라와 트리 윤곽을 한 바퀴 돈다 */
+const VBUS = [
+  [-5,-24],[-5,-19],[-34,-19],[-22,-4],[-27,-4],[-17,9],[-22,9],[-11,21],[-15,21],
+  [-4.5,32],[-7.5,32],[0,41],
+  [7.5,32],[4.5,32],[15,21],[11,21],[22,9],[17,9],[27,-4],[22,-4],[34,-19],
+  [5,-19],[5,-24]
+];
+route(VBUS, 1.4);
+
+/* 4-2. 줄기 버스 — U1 PB0..PB4 */
+const BUS_X = [-3.6,-1.8,0,1.8,3.6];
+BUS_X.forEach(function(x,i){ route([[x,-25],[x, ROWS[i].y+3]], 0.5); });
+
+/* 4-3. 가지 — 부품 자리를 먼저 정하고, 배선이 그 자리를 꿰어 간다.
+   LED와 직렬 저항은 실제로 직렬 연결이므로, 둘을 번갈아 지나는
+   지그재그 배선이 곧 올바른 라우팅이 된다. */
+const R_PERP = 3.9;                      // LED에서 가지선 건너편으로 물러나는 거리(mm)
+let jSeed = 0;
+function jit(){                          // 재현 가능한 의사난수 (-1 ~ +1)
+  const v = Math.sin((++jSeed)*127.1 + 311.7) * 43758.5453;
+  return (v - Math.floor(v)) * 2 - 1;
+}
+
+const PLACE = [];
+ROWS.forEach(function(r, ri){
+  const blen = Math.hypot(r.hw, DROP);
+  const row  = [];
+
+  for(let k=0;k<r.n;k++){
+    const t0  = (r.n===1) ? 0 : -0.88 + 1.76*k/(r.n-1);
+    const t   = t0 + jit()*0.9/blen;                  // 가지를 따라 조금씩 어긋나게
+    const ang = Math.atan2(-DROP*(t < 0 ? -1 : 1), r.hw);
+    const nx  = -Math.sin(ang), ny = Math.cos(ang);   // 가지선의 수직 방향
+    const b   = onBranch(r, t);
+    const side = ((k + ri) % 2) ? 1 : -1;             // 저항이 붙는 쪽을 번갈아
+
+    const dOff = jit()*0.5;
+    const rOff = side * R_PERP + jit()*0.4;
+
+    row.push({ kind:'D', t:t, row:ri, k:k, ord:0,
+               x:b[0] + nx*dOff, y:b[1] + ny*dOff, rot:ang + jit()*0.20 });
+    row.push({ kind:'R', t:t, row:ri, k:k, ord:1,
+               x:b[0] + nx*rOff, y:b[1] + ny*rOff, rot:ang + jit()*0.20 });
+  }
+  PLACE.push.apply(PLACE, row);
+
+  // t 순서대로 LED → 저항 → 다음 LED 를 꿰어 간다
+  const path = row.slice()
+    .sort(function(a,b){ return (a.t - b.t) || (a.ord - b.ord); })
+    .map(function(q){ return [q.x, q.y]; });
+  route([endOf(r,-1)].concat(path, [endOf(r,1)]), 0.8);
+
+  route([endOf(r,-1), [-r.hw-2.5, r.y+3-DROP-1.5]], 0.8);   // → VBUS 레일
+  route([endOf(r, 1), [ r.hw+2.5, r.y+3-DROP-1.5]], 0.8);
+  stitchVia(-r.hw-2.5, r.y+3-DROP-1.5);
+  stitchVia( r.hw+2.5, r.y+3-DROP-1.5);
+});
+
+/* 4-4. 별(D1) 급전 */
+route([[0,33],[0,37.6]], 0.8);
+route([[-1.8,33],[-1.8,36.2],[-2.6,36.2],[-2.6,37.6]], 0.5);
+
+/* 4-5. 전원부 배선 : J2(VBUS) → SW1 → VBUS 레일 / U1 / C2 */
+route([[-3.0,-43.4],[-3.0,-39.0],[30,-39.0],[33.5,-39.0],[33.5,-42.3]], 1.4); // VBUS → SW1
+route([[36,-42.3],[36,-36.5],[45,-36.5],[45,-27],[12,-27],[12,-24],[5,-24]], 1.4); // SW1 → 레일(우)
+route([[-5,-24],[-12,-24],[-12,-27],[-19,-27],[-19,-35]], 1.0);              // 레일(좌) → C2(+)
+route([[-5,-19],[-5,-24]], 2.4);   // 줄기 좌 (폭 증강)
+route([[ 5,-19],[ 5,-24]], 2.4);   // 줄기 우
+route([[ 1.0,-43.4],[ 1.0,-45.5],[ 8,-45.5]], 0.6);                          // CC1 → R6
+route([[-1.0,-43.4],[-1.0,-45.5],[-8,-45.5]], 0.6);                          // CC2 → R7
+
+/* 4-6. ISP 배선 — J1 → U1 (MOSI / MISO / SCK / RESET) */
+route([[33.5,38.7],[29,38.7],[29,26],[14,26],[14,-20],[3.6,-20],[3.6,-25]], 0.35);
+route([[33.5,41.2],[27,41.2],[27,28],[16,28],[16,-22],[1.8,-22],[1.8,-25]], 0.35);
+route([[38.5,38.7],[42,38.7],[42,-16],[18,-16],[18,-24],[0,-24],[0,-25]], 0.35);
+route([[38.5,41.2],[44,41.2],[44,-12],[20,-12],[20,-26],[-1.8,-26],[-1.8,-25]], 0.35);
+
+/* 4-7. 비아 스티칭 — GND 폴리곤 전면 8 mm 엇갈린 격자 */
+function distToPath(x,y,pts){
+  if(pts.length===1) return Math.hypot(x-pts[0][0], y-pts[0][1]);
+  let best = Infinity;
+  for(let i=0;i<pts.length-1;i++){
+    const x1=pts[i][0], y1=pts[i][1], x2=pts[i+1][0], y2=pts[i+1][1];
+    const dx=x2-x1, dy=y2-y1, L2=dx*dx+dy*dy;
+    let t = L2 ? ((x-x1)*dx + (y-y1)*dy)/L2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    best = Math.min(best, Math.hypot(x-(x1+t*dx), y-(y1+t*dy)));
+  }
+  return best;
+}
+const stitchPts = [];
+for(let gy=-44; gy<=44; gy+=8){
+  for(let gx=-44; gx<=44; gx+=8){
+    const jx = gx + (Math.round((gy+44)/8)%2 ? 4 : 0);
+    if(Math.abs(jx)>44.5) continue;
+    stitchPts.push([jx,gy]);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   5. 부품
+   ══════════════════════════════════════════════════════════════ */
+const leds = [];
+
+function pads0805(x,y,rot){
+  const ca=Math.cos(rot), sa=Math.sin(rot);
+  [-0.95,0.95].forEach(function(dx){ smdPad(x+ca*dx, y+sa*dx, 1.0, 1.3, rot); });
+  netPaths.push({ pts:[[x,y]], r:2.6 });
+}
+function courtyard(x,y,w,h,rot){
+  const c=Math.cos(rot), s=Math.sin(rot);
+  const p = [[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]]
+    .map(function(q){ return [x+c*q[0]-s*q[1], y+s*q[0]+c*q[1]]; });
+  outlineS(p, 0.18);
+}
+
+/* 점광 텍스처 — LED가 사각형이 아니라 둥근 빛으로 읽히게 한다 */
+const GLOW_TEX = (function(){
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const c = cv.getContext('2d');
+  const g = c.createRadialGradient(64,64,0, 64,64,64);
+  g.addColorStop(0.00,'rgba(255,255,255,1)');
+  g.addColorStop(0.16,'rgba(255,255,255,0.70)');
+  g.addColorStop(0.42,'rgba(255,255,255,0.20)');
+  g.addColorStop(1.00,'rgba(255,255,255,0)');
+  c.fillStyle = g; c.fillRect(0,0,128,128);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
+
+const LENS_GEO = new THREE.SphereGeometry(0.62, 20, 12);
+const LED_BODY = new RoundedBoxGeometry(2.0, 1.25, 0.55, 3, 0.14);
+const RES_BODY = new RoundedBoxGeometry(2.0, 1.25, 0.50, 3, 0.11);
+const CAP_BODY = new RoundedBoxGeometry(2.0, 1.25, 0.85, 3, 0.16);
+
+function makeLED(x,y,rot,col,name){
+  pads0805(x,y,rot);
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(LED_BODY,
+    new THREE.MeshStandardMaterial({ color:0xd4d0c7, roughness:0.66, metalness:0.02 }));
+  body.position.z = 0.275; g.add(body);
+  [-0.85,0.85].forEach(function(dx){
+    const e = new THREE.Mesh(new THREE.BoxGeometry(0.32,1.27,0.58), M.pad);
+    e.position.set(dx,0,0.28); g.add(e);
+  });
+  // 실리콘 렌즈 — 납작한 돔. 위에서 보면 둥근 빛점이 된다.
+  const lensMat = new THREE.MeshStandardMaterial({ color:col, emissive:col,
+    emissiveIntensity:0, roughness:0.18, metalness:0, transparent:true, opacity:0.95 });
+  const lens = new THREE.Mesh(LENS_GEO, lensMat);
+  lens.scale.set(1.08, 0.86, 0.72);
+  lens.position.z = 0.40; g.add(lens);
+  g.position.set(x,y,Z_CMP); g.rotation.z = rot; gPart.add(g);
+
+  // 점광 스프라이트 — 밝기에 따라 크기와 농도가 함께 변한다
+  const glowMat = new THREE.SpriteMaterial({ map:GLOW_TEX, color:col, transparent:true,
+    opacity:0, blending:THREE.AdditiveBlending, depthWrite:false });
+  const glow = new THREE.Sprite(glowMat);
+  glow.position.set(x, y, Z_CMP + 0.9);
+  glow.scale.set(3.4, 3.4, 1);
+  gPart.add(glow);
+
+  // 캐소드 표시 (실크) — 실물에서 극성 판별에 쓰는 짧은 막대
+  const c=Math.cos(rot), s=Math.sin(rot);
+  stroke([[x-c*1.55+s*0.75, y-s*1.55-c*0.75],[x-c*1.55-s*0.75, y-s*1.55+c*0.75]],
+         0.22, Z_SILK, M.silk, gSilk, false);
+
+  leds.push({ mat:lensMat, glowMat:glowMat, glowSp:glow,
+              base:new THREE.Color(col), name:name,
+              phase:Math.random()*Math.PI*2, x:x, y:y });
+  ref(name, x + s*2.4, y - c*2.4, rot);
+  addLabel(name, x, y+2.4);
+}
+
+function makeRes(x,y,rot,name,val){
+  pads0805(x,y,rot);
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(RES_BODY, M.res);
+  b.position.z = 0.25; g.add(b);
+  [-0.85,0.85].forEach(function(dx){
+    const e = new THREE.Mesh(new THREE.BoxGeometry(0.34,1.27,0.54), M.pad);
+    e.position.set(dx,0,0.27); g.add(e);
+  });
+  const t = textMesh(val||'151',0.6,{ color:'#d4d4d4' }); t.position.z = 0.505; g.add(t);
+  g.position.set(x,y,Z_CMP); g.rotation.z = rot; gPart.add(g);
+  const c=Math.cos(rot), s=Math.sin(rot);
+  ref(name, x + s*2.4, y - c*2.4, rot);
+  addLabel(name, x, y+2.4);
+}
+
+function makeCap0805(x,y,rot,name){
+  pads0805(x,y,rot);
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(CAP_BODY,
+    new THREE.MeshStandardMaterial({ color:0x9d9081, roughness:0.56, metalness:0.05 }));
+  b.position.z = 0.425; g.add(b);
+  [-0.8,0.8].forEach(function(dx){
+    const e = new THREE.Mesh(new THREE.BoxGeometry(0.42,1.28,0.88), M.pad);
+    e.position.set(dx,0,0.44); g.add(e);
+  });
+  g.position.set(x,y,Z_CMP); g.rotation.z = rot; gPart.add(g);
+  ref(name, x+2.8, y);
+  addLabel(name, x, y+2.4);
+}
+
+function makeSOIC8(x,y,rot,name){
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.BoxGeometry(4.9,3.9,1.4), M.ic);
+  b.position.z = 0.85; g.add(b);
+  const c=Math.cos(rot), s=Math.sin(rot);
+  for(let i=0;i<4;i++){
+    const py = 1.905 - i*1.27;
+    [-1,1].forEach(function(sg){
+      const px = sg*3.0;
+      smdPad(x + c*px - s*py, y + s*px + c*py, 1.5, 0.6, rot);
+      const lead = new THREE.Mesh(new THREE.BoxGeometry(1.5,0.55,0.22), M.pad);
+      lead.position.set(px,py,0.3); g.add(lead);
+      const knee = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.55,0.9), M.pad);
+      knee.position.set(sg*2.45,py,0.6); g.add(knee);
+    });
+  }
+  const dot = new THREE.Mesh(new THREE.CircleGeometry(0.32,14),
+    new THREE.MeshStandardMaterial({ color:0x8f9597, roughness:0.82 }));
+  dot.position.set(-1.65,1.35,1.551); g.add(dot);
+  const t = textMesh('ATTINY85',0.75,{ color:'#969c9e' });
+  t.position.set(0.35,-0.1,1.551); g.add(t);
+  g.position.set(x,y,Z_CMP); g.rotation.z = rot; gPart.add(g);
+
+  courtyard(x,y,5.6,4.6,rot);
+  disc(0.4, Z_SILK, M.silk, x + c*(-3.7) - s*1.905, y + s*(-3.7) + c*1.905, 12, gSilk);
+  ref(name, x+5.2, y+3.2);
+  addLabel(name, x+5.5, y);
+  netPaths.push({ pts:[[x,y]], r:6.5 });
+}
+
+/** USB-C 2.0 리셉터클 (16P SMD, 엣지 마운트) — 전원 입력 */
+function makeUSBC(x,y,name){
+  const W = 8.94, D = 7.35, H = 3.16;
+
+  // 5-1. 신호 / 전원 패드 2열 (0.5 mm 피치)
+  for(let row=0; row<2; row++){
+    const py = y + 2.85 + row*0.9;
+    for(let i=0;i<8;i++){
+      const px = x - 1.75 + i*0.5 + (row ? 0.25 : 0);
+      smdPad(px, py, 0.3, 1.0, 0);
+    }
+  }
+  // 5-2. 셸 그라운드 탭 (대형 패드 2개)
+  smdPad(x-4.15, y+3.3, 1.7, 2.1, 0);
+  smdPad(x+4.15, y+3.3, 1.7, 2.1, 0);
+  // 5-3. 위치결정 관통 홀 2개
+  roundPad(x-3.0, y-1.4, 1.0, 0.62);
+  roundPad(x+3.0, y-1.4, 1.0, 0.62);
+
+  // 5-4. 금속 셸
+  const g = new THREE.Group();
+  const shellMat = new THREE.MeshStandardMaterial({ color:0x848a8d, roughness:0.44, metalness:0.86 });
+  const shell = new THREE.Mesh(new THREE.BoxGeometry(W, D, H), shellMat);
+  shell.position.set(0, 0, H/2); g.add(shell);
+  // 삽입구 (전면, 보드 바깥쪽을 향한다)
+  const mouth = new THREE.Mesh(new THREE.BoxGeometry(W-1.6, 0.9, H-1.0), M.blk);
+  mouth.position.set(0, -D/2 + 0.42, H/2); g.add(mouth);
+  const tongue = new THREE.Mesh(new THREE.BoxGeometry(6.4, 0.7, 0.6),
+    new THREE.MeshStandardMaterial({ color:0x24282a, roughness:0.5, metalness:0.1 }));
+  tongue.position.set(0, -D/2 + 0.5, H/2); g.add(tongue);
+  // 셸 리브 (실물 USB-C 특유의 측면 성형 자국)
+  [-1,1].forEach(function(sg){
+    const rib = new THREE.Mesh(new THREE.BoxGeometry(0.5, D-1.4, 0.5), shellMat);
+    rib.position.set(sg*(W/2-0.05), -0.2, H/2); g.add(rib);
+  });
+  g.position.set(x, y, Z_CMP); gPart.add(g);
+
+  // 5-5. 실크 — 엣지 마운트 부품이므로 보드 안쪽에서 끊어 그린다
+  const cxw = (W+1.0)/2, cyt = y + (D+1.0)/2, cyb = -BOARD/2 + 0.6;
+  stroke([[x-cxw, cyb],[x-cxw, cyt],[x+cxw, cyt],[x+cxw, cyb]],
+         0.18, Z_SILK, M.silk, gSilk, false);
+  silk('USB-C 5V', 1.4, x, y + 5.4, { color:'#a9b1aa', kern:0.05 });
+  ref(name, x - 6.6, y + 5.4);
+  addLabel(name, x, y + 6.4);
+  netPaths.push({ pts:[[x,y]], r:8.0 });
+}
+
+function makeElec(x,y,name){
+  roundPad(x-1.25,y,1.5,0.6);
+  roundPad(x+1.25,y,1.5,0.6);
+  const g = new THREE.Group();
+  const can = new THREE.Mesh(new THREE.CylinderGeometry(2.6,2.6,6.2,40), M.elec);
+  can.rotation.x = Math.PI/2; can.position.z = 3.1; g.add(can);
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(2.45,2.45,0.3,40), M.padD);
+  top.rotation.x = Math.PI/2; top.position.z = 6.25; g.add(top);
+  const band = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.62,2.62,6.0,40,1,true,Math.PI*0.85,Math.PI*0.3),
+    new THREE.MeshStandardMaterial({ color:0x969b9d, roughness:0.60, metalness:0.15 }));
+  band.rotation.x = Math.PI/2; band.position.z = 3.1; g.add(band);
+  const t = textMesh('10uF',1.1,{ color:'#a5acaf' }); t.position.set(0,0.9,6.42); g.add(t);
+  g.position.set(x,y,Z_CMP); gPart.add(g);
+  const arc = [];
+  for(let i=0;i<=16;i++){ const a = Math.PI/2 + i*Math.PI/16; arc.push([x+Math.cos(a)*3.4, y+Math.sin(a)*3.4]); }
+  stroke(arc,0.2,Z_SILK,M.silk,gSilk,false);
+  ref(name, x-4.8, y+4.4);
+  addLabel(name, x, y+5);
+  netPaths.push({ pts:[[x,y]], r:6.5 });
+}
+
+function makeSwitch(x,y,name){
+  for(let i=-1;i<=1;i++) smdPad(x+i*2.5, y-2.3, 1.1, 1.9, 0);
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.BoxGeometry(7.0,3.6,1.5), M.sw);
+  b.position.z = 0.75; g.add(b);
+  const slot = new THREE.Mesh(new THREE.BoxGeometry(4.2,1.2,0.2), M.blk);
+  slot.position.z = 1.5; g.add(slot);
+  const act = new THREE.Mesh(new THREE.BoxGeometry(1.4,1.6,1.6), M.padD);
+  act.position.set(-1.1,0,2.0); g.add(act);
+  g.userData.actuator = act;
+  g.position.set(x,y,Z_CMP); gPart.add(g);
+  courtyard(x,y-0.3,8.0,6.0,0);
+  silk('ON',1.2,x-5.8,y+0.2,{ color:'#a9b1aa' });
+  ref(name, x, y+4.4);
+  addLabel(name, x, y+4.4);
+  netPaths.push({ pts:[[x,y]], r:7.5 });
+  return g;
+}
+
+function makeHeader(x,y,name){
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(7.9,5.3,2.5), M.blk);
+  base.position.z = 1.25; g.add(base);
+  for(let c=0;c<3;c++) for(let r=0;r<2;r++){
+    const px = -2.54+c*2.54, py = -1.27+r*2.54;
+    roundPad(x+px, y+py, 1.0, 0.5, M.gold);
+    const pin = new THREE.Mesh(new THREE.BoxGeometry(0.64,0.64,6.0), M.gold);
+    pin.position.set(px,py,3.0); g.add(pin);
+  }
+  g.position.set(x,y,Z_CMP); gPart.add(g);
+  courtyard(x,y,8.8,6.4,0);
+  outlineS([[-3.9,-2.5],[-1.4,-2.5],[-1.4,0],[-3.9,0]]
+    .map(function(q){ return [x+q[0], y+q[1]]; }), 0.18);
+  silk('ISP',1.2,x,y+4.5,{ color:'#a9b1aa' });
+  ref(name, x-6.4, y+4.5);
+  addLabel(name, x-6.5, y);
+  netPaths.push({ pts:[[x,y]], r:8 });
+}
+
+/** 0805 리셋터블 퓨즈 */
+function makeFuse(x,y,name){
+  pads0805(x,y,0);
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.BoxGeometry(2.0,1.25,0.6),
+    new THREE.MeshStandardMaterial({ color:0x8c7f5e, roughness:0.62, metalness:0.05 }));
+  b.position.z = 0.3; g.add(b);
+  [-0.85,0.85].forEach(function(dx){
+    const e = new THREE.Mesh(new THREE.BoxGeometry(0.34,1.27,0.64), M.pad);
+    e.position.set(dx,0,0.32); g.add(e);
+  });
+  g.position.set(x,y,Z_CMP); gPart.add(g);
+  ref(name, x, y+2.4);
+  addLabel(name, x, y+2.4);
+}
+
+/** SOD-123 쇼트키 다이오드 */
+function makeDiode(x,y,name){
+  smdPad(x-1.65, y, 1.1, 1.3, 0);
+  smdPad(x+1.65, y, 1.1, 1.3, 0);
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.BoxGeometry(2.7,1.5,1.0),
+    new THREE.MeshStandardMaterial({ color:0x20241f, roughness:0.42, metalness:0.12 }));
+  b.position.z = 0.5; g.add(b);
+  [-1.55,1.55].forEach(function(dx){
+    const e = new THREE.Mesh(new THREE.BoxGeometry(0.7,1.2,0.3), M.pad);
+    e.position.set(dx,0,0.16); g.add(e);
+  });
+  const k = new THREE.Mesh(new THREE.BoxGeometry(0.34,1.52,0.02),
+    new THREE.MeshStandardMaterial({ color:0xb9bfb9, roughness:0.9 }));
+  k.position.set(-0.95,0,1.001); g.add(k);
+  g.position.set(x,y,Z_CMP); gPart.add(g);
+  courtyard(x,y,4.4,2.6,0);
+  stroke([[x-2.5,y-0.9],[x-2.5,y+0.9]], 0.22, Z_SILK, M.silk, gSilk, false);
+  ref(name, x, y+2.6);
+  addLabel(name, x, y+2.6);
+  netPaths.push({ pts:[[x,y]], r:3.4 });
+}
+
+/** 테스트 포인트 */
+function makeTP(x,y,name,net){
+  disc(1.35,Z_GAP ,M.gap,x,y,22);
+  disc(1.15,Z_OPEN,M.gap,x,y,22);
+  disc(0.95,Z_PAD ,M.pad,x,y,22);
+  const arc=[];
+  for(let i=0;i<=22;i++){ const a=i*Math.PI*2/22; arc.push([x+Math.cos(a)*1.6, y+Math.sin(a)*1.6]); }
+  stroke(arc,0.18,Z_SILK,M.silk,gSilk,false);
+  ref(name+' '+net, x, y-3.1);
+  netPaths.push({ pts:[[x,y]], r:3.6 });
+}
+
+/** 피듀셜 마크 — SMT 장비 정렬 기준점 */
+function makeFiducial(x,y){
+  disc(1.6,Z_GAP ,M.gap,x,y,22);
+  disc(1.5,Z_OPEN,M.gap,x,y,22);
+  disc(0.5,Z_PAD ,M.pad,x,y,20);
+  netPaths.push({ pts:[[x,y]], r:3.2 });
+}
+
+/* 지정자 강조용 3D 라벨 */
+function addLabel(str,x,y){
+  const cv = document.createElement('canvas'), mc = cv.getContext('2d');
+  mc.font = '600 44px ui-monospace, Menlo, monospace';
+  cv.width = Math.ceil(mc.measureText(str).width + 26); cv.height = 62;
+  const c2 = cv.getContext('2d');
+  c2.fillStyle = 'rgba(12,16,18,.74)'; c2.beginPath();
+  if(c2.roundRect) c2.roundRect(0,0,cv.width,cv.height,10); else c2.rect(0,0,cv.width,cv.height);
+  c2.fill(); c2.strokeStyle = 'rgba(146,170,158,.4)'; c2.lineWidth = 2; c2.stroke();
+  c2.font = '600 44px ui-monospace, Menlo, monospace';
+  c2.fillStyle = '#9db2a6'; c2.textBaseline = 'middle'; c2.textAlign = 'center';
+  c2.fillText(str, cv.width/2, cv.height/2+1);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true, depthTest:false }));
+  const h = 2.5; sp.scale.set(h*cv.width/cv.height, h, 1);
+  sp.position.set(x,y,Z_CMP+4); sp.renderOrder = 999; gLabel.add(sp);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   6. 배치
+   ══════════════════════════════════════════════════════════════ */
+const LED_SEQ = [LED.red, LED.grn, LED.amb, LED.blu];
+
+/* LED마다 직렬 저항을 하나씩 둔다.
+   가지(= MCU 포트 하나)에 달린 LED 개수가 다르므로, 가지별 합계가
+   ATtiny85 포트 허용치 20 mA를 넘지 않도록 저항값을 달리 잡는다.
+     가지  LED수  저항    LED당    가지 합계
+      PB0    3    470 Ω   6.4 mA   19.2 mA
+      PB1    3    470 Ω   6.4 mA   19.2 mA
+      PB2    4    620 Ω   4.8 mA   19.4 mA
+      PB3    5    750 Ω   4.0 mA   20.0 mA
+      PB4    6    910 Ω   3.3 mA   19.8 mA           합계 약 98 mA */
+const R_ROW = ['471','471','621','751','911'];
+let dIdx = 2, rIdx = 2;
+
+// 꼭대기 별과 그 직렬 저항 (PB0 가지에 함께 물린다)
+makeLED(0, 39, 0.16, LED.star, 'D1');
+makeRes(-0.5, 35.3, Math.PI/2 - 0.13, 'R1', '471');
+
+// 4-3에서 정해 둔 배치표를 그대로 쓴다 (배선과 부품이 같은 좌표를 공유)
+PLACE.forEach(function(q){
+  if(q.kind === 'D') makeLED(q.x, q.y, q.rot, LED_SEQ[(q.row + q.k) % 4], 'D'+(dIdx++));
+  else               makeRes(q.x, q.y, q.rot, 'R'+(rIdx++), R_ROW[q.row]);
+});
+
+makeSOIC8(0,-29.5,Math.PI/2,'U1');
+makeCap0805(6.6,-29.5,Math.PI/2,'C1');
+makeUSBC(0,-46.3,'J2');
+makeRes(-8,-45.5, 0, 'R24', '512');     // CC2 풀다운 5.1k
+makeRes( 8,-45.5, 0, 'R23', '512');     // CC1 풀다운 5.1k
+makeElec(-19,-35,'C2');
+makeSwitch(36,-40,'SW1');
+makeHeader(36,40,'J1');
+
+makeFuse(20,-39,'F1');                          // VBUS 리셋터블 퓨즈
+makeDiode(27,-39,'D22');                        // 역전류 차단 쇼트키
+makeRes(30, 34, Math.PI/2, 'R22', '103');       // RESET 풀업 10k
+makeCap0805(-13,-41, 0, 'C3');                  // 입력부 디커플링
+
+makeTP(-43, 30,'TP1','VBUS');
+makeTP(-43, 22,'TP2','GND');
+makeTP( 43, 12,'TP3','PB0');
+makeTP( 43,  4,'TP4','RST');
+
+makeFiducial(-45.6, 45.6);
+makeFiducial( 45.6, 45.6);
+makeFiducial(-45.6,-45.6);
+
+/* 비아 스티칭은 모든 배선·부품이 등록된 뒤에 배치한다 */
+stitchPts.forEach(function(p){
+  for(let i=0;i<netPaths.length;i++){
+    if(distToPath(p[0],p[1],netPaths[i].pts) < netPaths[i].r) return;
+  }
+  stitchVia(p[0],p[1]);
+});
+
+/* ══════════════════════════════════════════════════════════════
+   7. 실크스크린 — 실물 기판에 실제로 인쇄되는 것만
+   ══════════════════════════════════════════════════════════════ */
+/* 7-1. 메인 문구 — 좌우 가장자리를 따라 세로로 인쇄. 실물 기판에서
+   여백에 문구를 세로로 앉히는 방식 그대로이다. */
+silk('MERRY CHRISTMAS', 3.4, -38.6, 9, { rot: Math.PI/2, bold:true, kern:0.14, color:'#c2c9c2' });
+silk('HAPPY NEW YEAR',  2.4,  38.6, 9, { rot:-Math.PI/2, kern:0.13, color:'#a7aea7' });
+
+/* 7-2. 데이터 매트릭스 마크 — 실물 기판의 로트 추적용 2D 코드 */
+(function(){
+  const CX = -40.5, CY = -34.2, CELL = 0.46, N = 10;
+  const bits = [
+    '1111111111','1000000101','1011101001','1010101111','1010100011',
+    '1011100101','1000001101','1111110011','0101010101','1010101011'
+  ];
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    if(bits[r][c] !== '1') continue;
+    plate(CELL, CELL, Z_SILK, M.silk,
+          CX - N*CELL/2 + c*CELL + CELL/2,
+          CY + N*CELL/2 - r*CELL - CELL/2, 0, gSilk);
+  }
+})();
+
+/* 7-3. 네트 라벨 — 실물 기판이 배선 옆에 찍어 두는 표기 */
+silk('VBUS',  1.3, -27.5, -17.2, { color:'#9aa29a', kern:0.05 });
+silk('VBUS',  1.3,  27.5, -17.2, { color:'#9aa29a', kern:0.05 });
+silk('GND',   1.3, -47.0,  -4.0, { rot:Math.PI/2, color:'#9aa29a', kern:0.05 });
+silk('PB0-4', 1.3,  10.5, -25.6, { color:'#9aa29a', kern:0.05 });
+silk('5V IN', 1.3,  20.0, -36.4, { color:'#9aa29a', kern:0.05 });
+
+silk('XMAS-TREE-100',         2.0, -31.0, -47.4, { kern:0.07, color:'#b4bbb4' });
+silk('REV 1.0',               2.0,  -9.0, -47.4, { kern:0.07, color:'#b4bbb4' });
+silk('2026-09',               2.0,   8.0, -47.4, { kern:0.07, color:'#b4bbb4' });
+silk('Pb-FREE RoHS',          1.6,  29.0, -47.4, { kern:0.05, color:'#9ea59e' });
+silk('USB-C 5V  ~98mA',      1.6, -33.0,  47.4, { kern:0.05, color:'#9ea59e' });
+silk('2 LAYER 1.6t HASL',     1.6,  33.0,  47.4, { kern:0.05, color:'#9ea59e' });
+
+silk('XMAS-TREE-100  ·  REV 1.0',        3.0, 0,  16, { back:true, kern:0.09 });
+silk('FR-4 1.6mm / 1oz Cu / HASL LF',    2.0, 0,   9, { back:true, kern:0.07, color:'#9ea59e' });
+silk('U1 ATtiny85V  ·  21 x LED + 21 x R',2.0, 0,   3, { back:true, kern:0.07, color:'#9ea59e' });
+silk('J2 USB-C 5V  ·  CC 5k1 x2',        2.0, 0,  -3, { back:true, kern:0.07, color:'#9ea59e' });
+silk('J1 ISP : 1=MOSI 2=VCC 3=GND',      1.7, 0, -10, { back:true, kern:0.05, color:'#8f968f' });
+silk('2026-09  ·  MADE IN KR',           1.7, 0, -16, { back:true, kern:0.05, color:'#8f968f' });
+silk('MERRY CHRISTMAS',                  3.4, 0, -27, { back:true, bold:true, kern:0.16 });
+
+/* LED 산란광 — 점등된 빛이 솔더마스크 위로 번지게 한다 */
+const glowLights = [
+  { light:new THREE.PointLight(0xffb98a, 0, 90, 2), y: 29 },
+  { light:new THREE.PointLight(0xa8d2b0, 0, 90, 2), y: 12 },
+  { light:new THREE.PointLight(0xffc79a, 0, 90, 2), y: -2 },
+  { light:new THREE.PointLight(0x9cc0e0, 0, 95, 2), y:-15 }
+];
+glowLights.forEach(function(G){ G.light.position.set(0, G.y, 16); board.add(G.light); });
+
+/* ══════════════════════════════════════════════════════════════
+   8. 포스트프로세싱
+   ══════════════════════════════════════════════════════════════ */
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+
+/* 8-1. 피사계 심도 — 초점에서 벗어난 LED가 빛망울로 풀린다 */
+const bokeh = new BokehPass(scene, camera, { focus:190, aperture:0.00006, maxblur:0.0010 });
+composer.addPass(bokeh);
+
+/* 8-2. 블룸 — 반경을 넓혀 경계가 뚜렷하지 않게 */
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight), 0.60, 0.88, 0.80);
+composer.addPass(bloom);
+
+composer.addPass(new OutputPass());
+
+/* 8-3. 색보정 — 블랙 리프트 / 하이라이트 온기 / 비네팅 / 필름 그레인 */
+const GradeShader = {
+  uniforms: {
+    tDiffuse : { value:null },
+    uTime    : { value:0 },
+    uAmount  : { value:1 }
+  },
+  vertexShader: [
+    'varying vec2 vUv;',
+    'void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }'
+  ].join('\n'),
+  fragmentShader: [
+    'uniform sampler2D tDiffuse;',
+    'uniform float uTime;',
+    'uniform float uAmount;',
+    'varying vec2 vUv;',
+    'float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); }',
+    'void main(){',
+    '  vec4 src = texture2D(tDiffuse, vUv);',
+    '  vec3 col = src.rgb;',
+    '  float l = dot(col, vec3(0.299,0.587,0.114));',
+    '  vec3 graded = col;',
+    '  graded = mix(graded, graded * vec3(1.07,1.00,0.93), smoothstep(0.30,1.0,l));',
+    '  graded += vec3(0.013,0.021,0.025) * (1.0 - smoothstep(0.0,0.42,l));',
+    '  vec2 d = vUv - 0.5;',
+    '  float vig = clamp(1.0 - dot(d,d) * 1.35, 0.0, 1.0);',
+    '  graded *= mix(1.0, vig, 0.82);',
+    '  float n = hash(vUv * 640.0 + fract(uTime) * 97.0);',
+    '  graded += (n - 0.5) * 0.024;',
+    '  gl_FragColor = vec4(mix(col, graded, uAmount), src.a);',
+    '}'
+  ].join('\n')
+};
+const grade = new ShaderPass(GradeShader);
+composer.addPass(grade);
+
+/* ══════════════════════════════════════════════════════════════
+   9. 점등 / UI / 루프
+   ══════════════════════════════════════════════════════════════ */
+const PATTERNS = ['TWINKLE','CHASE','BREATHE','STEADY'];
+let patIdx = 0, powerOn = true, spin = false, flipped = false, mood = true;
+
+const bandSum = [0,0,0,0], bandCnt = [0,0,0,0];
+function bandOf(y){ return y > 22 ? 0 : (y > 4 ? 1 : (y > -9 ? 2 : 3)); }
+
+function updateLEDs(t){
+  const mode = PATTERNS[patIdx];
+  for(let b=0;b<4;b++){ bandSum[b] = 0; bandCnt[b] = 0; }
+
+  leds.forEach(function(L,i){
+    let v = 0;
+    if(powerOn){
+      if(mode==='TWINKLE'){
+        // 느리게 흔들리는 주파형 위에 아주 느린 부파형을 겹쳐 물결지게 한다
+        const a = Math.sin(t*0.82 + L.phase*3.1);
+        const b = Math.sin(t*0.31 + L.phase*1.7);
+        v = 0.52 + 0.30*(0.5+0.5*a) + 0.18*(0.5+0.5*b);
+      }
+      else if(mode==='CHASE')   v = Math.pow(Math.max(0,Math.sin(t*1.5 - (L.y+45)*0.12)),4)*0.9 + 0.16;
+      else if(mode==='BREATHE') v = 0.26 + 0.74*(0.5+0.5*Math.sin(t*0.62 - i*0.045));
+      else                      v = 0.85;
+      if(L.name==='D1') v = Math.max(v, 0.70);
+    }
+    L.mat.emissiveIntensity = v*3.3;
+    L.mat.color.copy(L.base).multiplyScalar(0.55 + v*0.45);
+    L.glowMat.opacity = v*0.52;
+    const gz = 2.6 + v*3.4;
+    L.glowSp.scale.set(gz, gz, 1);
+    const b = bandOf(L.y); bandSum[b] += v; bandCnt[b] += 1;
+  });
+
+  // 구간별 평균 밝기로 산란광 세기를 맞춘다
+  glowLights.forEach(function(G,b){
+    const avg = bandCnt[b] ? bandSum[b]/bandCnt[b] : 0;
+    G.light.intensity += (avg*145 - G.light.intensity) * 0.12;
+  });
+}
+
+/* ── 8-BIT 캐롤 엔진 (Web Audio, 외부 파일 없음) ──────────────
+   멜로디는 구형파, 베이스는 두 옥타브 아래 짧은 펄스, 하이햇은
+   화이트 노이즈. 전형적인 8비트 사운드칩 구성을 흉내낸다.
+   수록곡은 모두 전통 캐롤(퍼블릭 도메인)이다.                   */
+const SEMI = { C:0, 'C#':1, D:2, 'D#':3, E:4, F:5, 'F#':6, G:7, 'G#':8, A:9, 'A#':10, B:11 };
+function noteHz(n){
+  const m = /^([A-G]#?)(-?\d)$/.exec(n);
+  if(!m) return 0;
+  return 440 * Math.pow(2, (SEMI[m[1]] + (parseInt(m[2],10)+1)*12 - 69) / 12);
+}
+
+const CAROLS = [
+  { name:'JINGLE BELLS', bpm:152, notes:[
+    ['E4',1],['E4',1],['E4',2],['E4',1],['E4',1],['E4',2],
+    ['E4',1],['G4',1],['C4',1.5],['D4',0.5],['E4',3],[null,1],
+    ['F4',1],['F4',1],['F4',1.5],['F4',0.5],
+    ['F4',1],['E4',1],['E4',1],['E4',0.5],['E4',0.5],
+    ['E4',1],['D4',1],['D4',1],['E4',1],['D4',2],['G4',2],
+    ['E4',1],['E4',1],['E4',2],['E4',1],['E4',1],['E4',2],
+    ['E4',1],['G4',1],['C4',1.5],['D4',0.5],['E4',3],[null,1],
+    ['F4',1],['F4',1],['F4',1.5],['F4',0.5],
+    ['F4',1],['E4',1],['E4',1],['E4',0.5],['E4',0.5],
+    ['G4',1],['G4',1],['F4',1],['D4',1],['C4',3],[null,1]
+  ]},
+  { name:'WE WISH YOU A MERRY CHRISTMAS', bpm:168, notes:[
+    ['C4',1],['F4',1],['F4',0.5],['G4',0.5],['F4',0.5],['E4',0.5],
+    ['D4',1],['D4',1],['D4',1],
+    ['G4',1],['G4',0.5],['A4',0.5],['G4',0.5],['F4',0.5],
+    ['E4',1],['C4',1],['C4',1],
+    ['A4',1],['A4',0.5],['A#4',0.5],['A4',0.5],['G4',0.5],
+    ['F4',1],['D4',1],['C4',0.5],['C4',0.5],
+    ['D4',1],['G4',1],['E4',1],['F4',2],[null,1],
+    ['C4',1],['F4',1],['F4',1],['F4',1],
+    ['E4',2],['E4',1],['F4',1],['E4',1],['D4',1],
+    ['C4',2],['C4',1],['D4',1],['G4',1],['E4',1],['F4',2],[null,1]
+  ]},
+  { name:'SILENT NIGHT', bpm:96, notes:[
+    ['G4',1.5],['A4',0.5],['G4',1],['E4',3],
+    ['G4',1.5],['A4',0.5],['G4',1],['E4',3],
+    ['D5',2],['D5',1],['B4',3],
+    ['C5',2],['C5',1],['G4',3],
+    ['A4',2],['A4',1],['C5',1.5],['B4',0.5],['A4',1],
+    ['G4',1.5],['A4',0.5],['G4',1],['E4',3],
+    ['A4',2],['A4',1],['C5',1.5],['B4',0.5],['A4',1],
+    ['G4',1.5],['A4',0.5],['G4',1],['E4',3],
+    ['D5',2],['D5',1],['F5',1.5],['D5',0.5],['B4',1],
+    ['C5',3],['E5',3],
+    ['C5',1],['G4',1],['E4',1],['G4',1.5],['F4',0.5],['D4',1],
+    ['C4',3],[null,3]
+  ]},
+  { name:'JOY TO THE WORLD', bpm:124, notes:[
+    ['C5',1.5],['B4',0.25],['A4',0.25],['G4',1.5],['F4',0.5],
+    ['E4',1],['D4',1],['C4',1.5],['G4',0.5],
+    ['A4',1.5],['A4',0.5],['B4',1.5],['B4',0.5],
+    ['C5',2],['C5',1],[null,1],
+    ['C5',0.5],['C5',0.5],['C5',0.5],['B4',0.5],['A4',0.5],['A4',0.5],['A4',0.5],['G4',0.5],
+    ['G4',0.5],['G4',0.5],['G4',0.5],['F4',0.5],['E4',2],
+    ['C5',0.5],['C5',0.5],['C5',0.5],['B4',0.5],['A4',0.5],['A4',0.5],['A4',0.5],['G4',0.5],
+    ['G4',0.5],['G4',0.5],['G4',0.5],['F4',0.5],['E4',2],[null,1]
+  ]}
+];
+
+/* 곡별 총 길이를 미리 구해 둔다 (마지막에 한 박 쉼을 붙여 순환한다) */
+CAROLS.forEach(function(sg){
+  let beats = 0;
+  sg.notes.forEach(function(n){ beats += n[1]; });
+  sg.cycleBeats = beats + 1;
+  sg.cycleSec   = sg.cycleBeats * (60 / sg.bpm);
+});
+
+let actx = null, mMaster = null, mNoise = null;
+let musicOn = false, paused = false;
+let trackIdx = 0, noteCur = 0, nextAt = 0, schedId = 0, songT0 = 0;
+let musicVol = 0.45;
+
+function audioInit(){
+  if(actx) return;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+  mMaster = actx.createGain();
+  mMaster.gain.value = musicVol * 0.5;
+  // 8비트다운 거친 질감을 위해 고역을 약간 깎는다
+  const lp = actx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 5200; lp.Q.value = 0.4;
+  mMaster.connect(lp); lp.connect(actx.destination);
+
+  const N = actx.sampleRate * 0.4;
+  mNoise = actx.createBuffer(1, N, actx.sampleRate);
+  const d = mNoise.getChannelData(0);
+  for(let i=0;i<N;i++) d[i] = Math.random()*2 - 1;
+}
+
+function tone(type, hz, at, dur, peak, detune){
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.value = hz;
+  if(detune) o.detune.value = detune;
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(peak, at + 0.008);
+  g.gain.exponentialRampToValueAtTime(peak*0.55, at + Math.min(0.09, dur*0.4));
+  g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  o.connect(g); g.connect(mMaster);
+  o.start(at); o.stop(at + dur + 0.02);
+}
+function hat(at, peak){
+  const src = actx.createBufferSource(), g = actx.createGain(), hp = actx.createBiquadFilter();
+  src.buffer = mNoise;
+  hp.type = 'highpass'; hp.frequency.value = 6500;
+  g.gain.setValueAtTime(peak, at);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + 0.045);
+  src.connect(hp); hp.connect(g); g.connect(mMaster);
+  src.start(at); src.stop(at + 0.06);
+}
+
+function scheduleAhead(){
+  if(!musicOn) return;
+  const song = CAROLS[trackIdx];
+  const spb = 60 / song.bpm;
+  while(nextAt < actx.currentTime + 0.35){
+    const ev = song.notes[noteCur];
+    const dur = ev[1] * spb;
+    if(ev[0]){
+      const hz = noteHz(ev[0]);
+      tone('square', hz, nextAt, Math.max(0.08, dur*0.92), 0.16);          // 멜로디
+      tone('square', hz/4, nextAt, Math.min(0.22, dur*0.7), 0.10, -6);     // 베이스
+      tone('triangle', hz*2, nextAt, Math.min(0.10, dur*0.4), 0.035);      // 배음
+    }
+    for(let b=0; b<Math.max(1, Math.round(ev[1]*2)); b++)
+      hat(nextAt + b*spb*0.5, 0.020);
+    nextAt += dur;
+    noteCur++;
+    if(noteCur >= song.notes.length){ noteCur = 0; nextAt += spb; }
+  }
+}
+function musicStart(){
+  audioInit();
+  if(actx.state === 'suspended') actx.resume();
+  musicOn = true; paused = false; noteCur = 0;
+  mMaster.gain.setTargetAtTime(musicVol * 0.5, actx.currentTime, 0.05);
+  nextAt = actx.currentTime + 0.12;
+  songT0 = nextAt;
+  clearInterval(schedId);
+  schedId = setInterval(scheduleAhead, 40);
+  scheduleAhead();
+}
+function musicPause(){
+  if(!actx || !musicOn || paused) return;
+  paused = true; actx.suspend();
+}
+function musicResume(){
+  if(!actx || !musicOn || !paused) return;
+  paused = false; actx.resume();
+}
+function musicSeek(frac){
+  if(!actx || !musicOn) return;
+  const sg = CAROLS[trackIdx], spb = 60 / sg.bpm;
+  const target = Math.max(0, Math.min(0.999, frac)) * sg.cycleSec;
+  let acc = 0, idx = 0;
+  for(; idx < sg.notes.length; idx++){
+    const d = sg.notes[idx][1] * spb;
+    if(acc + d > target) break;
+    acc += d;
+  }
+  if(idx >= sg.notes.length){ idx = 0; acc = 0; }
+  noteCur = idx;
+  nextAt  = actx.currentTime + 0.04;
+  songT0  = nextAt - acc;
+  scheduleAhead();
+}
+/** 재생 위치 (0~1). 일시정지 중에는 currentTime이 멈추므로 값도 멈춘다. */
+function musicPos(){
+  if(!actx || !musicOn) return 0;
+  const cyc = CAROLS[trackIdx].cycleSec;
+  const e = (actx.currentTime - songT0) % cyc;
+  return (e < 0 ? e + cyc : e) / cyc;
+}
+function fmtTime(sec){
+  const m = Math.floor(sec/60), r = Math.floor(sec%60);
+  return m + ':' + (r < 10 ? '0' : '') + r;
+}
+
+const $ = function(id){ return document.getElementById(id); };
+const setBtn = function(el,on,txt){ el.classList.toggle('on',on); el.querySelector('.st').textContent = txt; };
+
+$('bPower').onclick = function(){
+  powerOn = !powerOn;
+  setBtn($('bPower'),powerOn,powerOn?'ON':'OFF');
+  const sw = gPart.children.find(function(o){ return o.userData.actuator; });
+  if(sw) sw.userData.actuator.position.x = powerOn ? -1.1 : 1.1;
+};
+$('bPattern').onclick = function(){ patIdx = (patIdx+1)%PATTERNS.length; /* 레이어 표시 */
+$('bSilk').onclick  = function(){ gSilk.visible = !gSilk.visible;
+  setBtn($('bSilk'), gSilk.visible, gSilk.visible?'ON':'OFF'); };
+$('bParts').onclick = function(){ gPart.visible = !gPart.visible;
+  setBtn($('bParts'), gPart.visible, gPart.visible?'ON':'OFF'); };
+
+/* ── 사운드 플레이어 ─────────────────────────────────────── */
+const elPlay = $('bPlay'), elFill = $('pfill'), elCur = $('pcur'), elDur = $('pdur');
+
+function syncPlayer(){
+  const sg = CAROLS[trackIdx];
+  $('trackName').textContent = sg.name;
+  elDur.textContent = fmtTime(sg.cycleSec);
+  const playing = musicOn && !paused;
+  elPlay.textContent = playing ? '❚❚' : '▶';
+  elPlay.classList.toggle('playing', playing);
+  if(!musicOn){ elFill.style.width = '0%'; elCur.textContent = '0:00'; }
+}
+function switchTrack(dir){
+  trackIdx = (trackIdx + dir + CAROLS.length) % CAROLS.length;
+  if(musicOn) musicStart(); 
+  syncPlayer();
+}
+
+elPlay.onclick = function(){
+  if(!musicOn)      musicStart();
+  else if(paused)   musicResume();
+  else              musicPause();
+  syncPlayer();
+};
+$('bPrev').onclick = function(){
+  // 3초 이상 재생됐으면 현재 곡을 처음으로, 아니면 이전 곡으로 (일반 플레이어 동작)
+  if(musicOn && musicPos() * CAROLS[trackIdx].cycleSec > 3) musicSeek(0);
+  else switchTrack(-1);
+};
+$('bNext').onclick = function(){ switchTrack(1); };
+$('pbar').onclick  = function(e){
+  const r = e.currentTarget.getBoundingClientRect();
+  musicSeek((e.clientX - r.left) / r.width);
+};
+$('vol').oninput = function(e){
+  musicVol = e.target.value / 100;
+  if(mMaster) mMaster.gain.setTargetAtTime(musicVol*0.5, actx.currentTime, 0.04);
+};
+syncPlayer();
+
+setBtn($('bPattern'),true,PATTERNS[patIdx]); };
+$('bSpin').onclick    = function(){ spin = !spin; setBtn($('bSpin'),spin,spin?'ON':'OFF'); };
+$('bLabel').onclick   = function(){ gLabel.visible = !gLabel.visible; setBtn($('bLabel'),gLabel.visible,gLabel.visible?'ON':'OFF'); };
+$('bFlip').onclick    = function(){ flipped = !flipped; setBtn($('bFlip'),flipped,flipped?'BOTTOM':'TOP'); };
+$('bMood').onclick    = function(){
+  mood = !mood;
+  setBtn($('bMood'), mood, mood?'ON':'OFF');
+  bokeh.enabled = mood;
+  dust.visible  = mood;
+};
+$('bReset').onclick   = function(){ camera.position.set(26,20,190); controls.target.set(0,0,0);
+                                    flipped = false; setBtn($('bFlip'),false,'TOP'); };
+setBtn($('bPattern'),true,PATTERNS[patIdx]);
+
+const clock = new THREE.Clock();
+let introT = 0, fpsAcc = 0, fpsN = 0, fpsT = 0;
+const elFps = $('fps'), elBar = $('focusBar'), elFoc = $('focusVal');
+function tick(){
+  requestAnimationFrame(tick);
+  const dt = Math.min(clock.getDelta(),0.05), t = clock.elapsedTime;
+  updateLEDs(t);
+  const ty = flipped ? Math.PI : 0;
+  board.rotation.y += (ty - board.rotation.y) * Math.min(1, dt*5);
+  if(spin) board.rotation.y += dt*0.35;
+  if(introT < 1){
+    introT = Math.min(1, introT + dt*0.55);
+    const e = 1 - Math.pow(1-introT,3);
+    board.rotation.x = (1-e)*-0.5;
+    board.rotation.z = (1-e)*0.16;
+  }
+  // 아주 느린 표류 — 정지 화면이 아니라 숨 쉬는 느낌을 준다
+  rig.rotation.x = Math.sin(t*0.155) * 0.034;
+  rig.rotation.z = Math.sin(t*0.108 + 1.3) * 0.021;
+
+  // 먼지 부유
+  if(mood){
+    const a = dustGeo.attributes.position;
+    for(let i=0;i<DUST_N;i++){
+      let py = a.array[i*3+1] + dt*1.35;
+      if(py > 130) py = -130;
+      a.array[i*3+1] = py;
+      a.array[i*3]  += Math.sin(t*0.22 + dustSeed[i]) * dt * 0.9;
+    }
+    a.needsUpdate = true;
+    dust.material.opacity = 0.34 + 0.10*Math.sin(t*0.5);
+  }
+
+  // 심도 호흡 — 흐려졌다 선명해지기를 약 18초 주기로 반복한다.
+  // 지수를 2.2로 두어 선명한 구간에 훨씬 오래 머문다.
+  const breath = Math.pow(0.5 + 0.5*Math.sin(t * (Math.PI*2/18) - Math.PI/2), 2.2);
+  const dist = camera.position.distanceTo(controls.target);
+  bokeh.uniforms['focus'].value    = dist + Math.sin(t*0.21) * 14 * breath;
+  bokeh.uniforms['aperture'].value = 0.000035 + 0.000135 * breath;
+  bokeh.uniforms['maxblur'].value  = 0.0006  + 0.0044   * breath;
+  bloom.radius = mood ? (0.80 + 0.18*breath) : 0.55;
+  grade.uniforms.uTime.value = t;
+
+  // 상태 표시 갱신 (0.4초 간격)
+  fpsAcc += dt; fpsN++;
+  if(t - fpsT > 0.4){
+    fpsT = t;
+    if(elFps) elFps.textContent = Math.round(fpsN / fpsAcc) + ' fps';
+    fpsAcc = 0; fpsN = 0;
+    if(elBar) elBar.style.width = Math.round((mood ? breath : 0) * 100) + '%';
+    if(elFoc) elFoc.textContent = !mood ? 'FIXED' : (breath < 0.18 ? 'SHARP' : (breath < 0.6 ? 'RACK' : 'SOFT'));
+    if(musicOn){
+      const pos = musicPos(), cyc = CAROLS[trackIdx].cycleSec;
+      elFill.style.width = (pos*100).toFixed(1) + '%';
+      elCur.textContent  = fmtTime(pos * cyc);
+    }
+  }
+
+  controls.update();
+  composer.render();
+}
+tick();
+
+addEventListener('resize', function(){
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+  composer.setSize(innerWidth,innerHeight);
+  bloom.setSize(innerWidth,innerHeight);
+});
+requestAnimationFrame(function(){ $('loading').classList.add('hide'); });
+</script>
+</body>
+</html>
